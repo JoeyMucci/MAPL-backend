@@ -45,8 +45,8 @@ def play_bouts():
 
         # Quirk effects
         if(
-            (away_pebbler.quirk == "Oddball" and (bout.away_roll + bout.home_roll) % 2 != bout.day % 2) or
-            (away_pebbler.quirk == "Even Temper" and (bout.away_roll + bout.home_roll) % 2 == bout.day % 2) or
+            (away_pebbler.quirk == "Oddball" and bout.away_roll % 2 != bout.day % 2 and bout.home_roll == bout.day % 2) or
+            (away_pebbler.quirk == "Even Temper" and bout.away_roll % 2 == bout.day % 2 and bout.home_roll == bout.day % 2) or
             (away_pebbler.quirk == "Pity Pebble" and bout.home_roll - bout.away_roll > 1) or
             (away_pebbler.quirk == "Proud Pebble" and bout.away_roll - bout.home_roll > 1) or
             (away_pebbler.quirk == "Untouchable" and bout.home_roll == 1)
@@ -57,8 +57,8 @@ def play_bouts():
             away_pebbler.qp += division_stats[bout.division]["Quirk"]
 
         if (
-            (home_pebbler.quirk == "Oddball" and (bout.away_roll + bout.home_roll) % 2 != bout.day % 2) or
-            (home_pebbler.quirk == "Even Temper" and (bout.away_roll + bout.home_roll) % 2 == bout.day % 2) or
+            (home_pebbler.quirk == "Oddball" and bout.home_roll % 2 != bout.day % 2 and bout.away_roll == bout.day % 2) or
+            (home_pebbler.quirk == "Even Temper" and bout.home_roll % 2 == bout.day % 2 and bout.away_roll == bout.day % 2) or
             (home_pebbler.quirk == "Pity Pebble" and bout.away_roll - bout.home_roll > 1) or
             (home_pebbler.quirk == "Proud Pebble" and bout.home_roll - bout.away_roll > 1) or
             (home_pebbler.quirk == "Untouchable" and bout.away_roll == 1)
@@ -133,16 +133,16 @@ def play_bouts():
 
         # Final score calculation
         if bout.away_roll_final == bout.home_roll_final:
-            bout.away_score = 3 * (2 * away_draw_mult)
-            bout.home_score = 3 * (2 * home_draw_mult)
+            bout.away_score += 3 * (2 * away_draw_mult)
+            bout.home_score += 3 * (2 * home_draw_mult)
             away_performance.ties += 1; away_performance.form += "D"
             home_performance.ties += 1; home_performance.form += "D"
         elif bout.away_roll_final > bout.home_roll_final:
-            bout.away_score = 3 * (3 * away_win_mult + (bout.away_roll_final - bout.home_roll_final))
+            bout.away_score += 3 * (3 * away_win_mult + (bout.away_roll_final - bout.home_roll_final))
             away_performance.wins += 1; away_performance.form += "W"
             home_performance.losses += 1; home_performance.form += "L"
         else:
-            bout.home_score = 3 * (3 * home_win_mult + (bout.home_roll_final - bout.away_roll_final))
+            bout.home_score += 3 * (3 * home_win_mult + (bout.home_roll_final - bout.away_roll_final))
             away_performance.losses += 1; away_performance.form += "L"
             home_performance.wins += 1; home_performance.form += "W"
 
