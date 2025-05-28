@@ -99,18 +99,23 @@ for division in ["Master", "All-Star", "Professional", "Learner"]:
     pebbler_names.insert(0, "Bye") # Insert a dummy for indexing
 
     day_num = 1
-    for day in schedule: 
+    for day in schedule:
+        bout_objs = [] 
         for bout in day["bouts"]:
             time = time_ticker
             time_ticker += timezone.timedelta(minutes=1)
-            bout_obj = Bout(
-                home=Pebbler.objects.get(name=pebbler_names[bout["home"]]),
-                away=Pebbler.objects.get(name=pebbler_names[bout["away"]]),
-                time=time,
-                division=division,
-                year=2025,
-                month=6,
-                day=day_num
+            bout_objs.append(
+                Bout(
+                    home=Pebbler.objects.get(name=pebbler_names[bout["home"]]),
+                    away=Pebbler.objects.get(name=pebbler_names[bout["away"]]),
+                    time=time,
+                    division=division,
+                    year=2025,
+                    month=6,
+                    day=day_num,
+                    last_in_day=False,
+                )
             )
-            bout_obj.save()
+        bout_objs[-1].last_in_day = True  # Mark the last bout of the day
+        Bout.objects.bulk_create(bout_objs)
         day_num += 1

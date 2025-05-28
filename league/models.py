@@ -56,6 +56,8 @@ class Bout(models.Model):
     away_score = models.IntegerField(default=0)
     home_score = models.IntegerField(default=0)
 
+    last_in_day = models.BooleanField()
+
     def __str__(self):
         return f"{self.division}: {self.away} @ {self.home} ({self.month:02d}-{self.day:02d}-{self.year})"
 
