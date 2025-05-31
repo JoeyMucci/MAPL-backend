@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from .models import *
 
+class PebblerFull(serializers.ModelSerializer):
+    class Meta:
+        model = Pebbler
+        fields = '__all__'
 
 class PebblerPreview(serializers.ModelSerializer):
     class Meta:
