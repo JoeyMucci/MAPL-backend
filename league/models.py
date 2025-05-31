@@ -5,6 +5,8 @@ class Pebbler(models.Model):
 
     pebbles = models.IntegerField(default=0)
 
+    current_rank = models.IntegerField(null=True)
+
     # Grace, Skill, Power, Speed
     trait = models.CharField(max_length=5)
 

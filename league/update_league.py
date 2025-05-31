@@ -40,7 +40,7 @@ def startup_league(year: int, month: int) -> None:
     def create_pebbler_list() -> List[Pebbler]:
         traits = ["Grace", "Skill", "Power", "Speed"]
         quirks = ["Oddball", "Even Temper", "Proud Pebble", "Pity Pebbler", "Untouchable"]
-        abilities = ["Generosity", "Will to Win", "Lukcy Seven", "Miracle", "Tip the Scales"]
+        abilities = ["Generosity", "Will to Win", "Lucky Seven", "Miracle", "Tip the Scales"]
 
         pebbler_names = [
             "Ally", "Ally Jr.", "Almond", "Aurora", "Aversa", "Baby", "Bamboo", "Banji", "Barry", "Beefcake",
@@ -148,23 +148,24 @@ def play_bout(bout : Bout) -> None:
 
         if away_pebbler.ability == "Generosity":
             if bout.away_roll == bout.home_roll and r.random() < trigger_rates["Generosity"] * divison_rate_mult:
-                away_draw_mult = 2; away_performance.at += 1; away_pebbler.at += 1
+                away_draw_mult = 2; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Will to Win":
             if bout.away_roll == bout.home_roll and r.random() < trigger_rates["Will to Win"] * divison_rate_mult:
                 bout.away_roll_half = rolls[away_pebbler.trait][r.randint(0, 5)]
-                away_win_mult = 2; away_performance.at += 1; away_pebbler.at += 1
+                away_win_mult = 2; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Lucky Seven":
             if bout.away_roll > bout.home_roll and r.random() < trigger_rates["Lucky Seven"] * divison_rate_mult:
-                bout.away_roll_half = 7; away_performance.at += 1; away_pebbler.at += 1
+                bout.away_roll_half = 7; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Miracle":
             if bout.away_roll < bout.home_roll and r.random() < trigger_rates["Miracle"] * divison_rate_mult:
-                bout.away_roll_half = bout.home_roll; away_performance.at += 1; away_pebbler.at += 1
+                bout.away_roll_half = bout.home_roll; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
         else: # Tip the Scales
             if bout.away_roll + 1 == bout.home_roll and r.random() < trigger_rates["Tip the Scales"] * divison_rate_mult:
                 bout.away_roll_half = bout.away_roll + 1
                 bout.home_roll_half = bout.home_roll - 1
                 home_performance.at += 1
                 home_pebbler.at += 1
+                bout.away_ability = True
 
         # Update rolls
         if bout.away_roll_half is None:
@@ -176,23 +177,24 @@ def play_bout(bout : Bout) -> None:
 
         if home_pebbler.ability == "Generosity":
             if bout.home_roll_half == bout.away_roll_half and r.random() < trigger_rates["Generosity"] * divison_rate_mult:
-                home_draw_mult = 2; home_performance.at += 1; home_pebbler.at += 1
+                home_draw_mult = 2; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Will to Win":
             if bout.home_roll_half == bout.away_roll_half and r.random() < trigger_rates["Will to Win"] * divison_rate_mult:
                 bout.home_roll_final = rolls[home_pebbler.trait][r.randint(0, 5)]
-                home_win_mult = 2; home_performance.at += 1; home_pebbler.at += 1
+                home_win_mult = 2; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Lucky Seven":
             if bout.home_roll_half > bout.away_roll_half and r.random() < trigger_rates["Lucky Seven"] * divison_rate_mult:
-                bout.home_roll_final = 7; home_performance.at += 1; home_pebbler.at += 1
+                bout.home_roll_final = 7; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Miracle":
             if bout.home_roll_half < bout.away_roll_half and r.random() < trigger_rates["Miracle"] * divison_rate_mult:
-                bout.home_roll_final = bout.away_roll; home_performance.at += 1; home_pebbler.at += 1
+                bout.home_roll_final = bout.away_roll; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
         else: # Tip the Scales
             if bout.home_roll_half + 1 == bout.away_roll_half and r.random() < trigger_rates["Tip the Scales"] * divison_rate_mult:
                 bout.away_roll_final = bout.away_roll_half - 1
                 bout.home_roll_final = bout.home_roll_half + 1
                 home_performance.at += 1
                 home_pebbler.at += 1
+                bout.home_ability = True
 
         # Update rolls
         if bout.away_roll_final is None:
@@ -287,6 +289,8 @@ def rerank_division(division: str, year: int, month: int) -> None:
     for i, performance in enumerate(performance_list):
         performance.previous_rank = performance.rank
         performance.rank = i + 1
+        performance.pebbler.rank = i + 1
+        performance.pebbler.save()
         performance.save()
 
 # 1) Promote and demote based on performances
@@ -392,7 +396,7 @@ def prepare_next_month(year: int, month: int) -> None:
                     pebbler.professionals += 1
                 case "Learner":
                     pebbler.learners += 1
-            pebbler.save()
+            
 
             # 3) Add performance for the next month
             tb = r.choice(tiebreakers)
@@ -406,6 +410,9 @@ def prepare_next_month(year: int, month: int) -> None:
                 rank=tb,
                 previous_rank=tb,
             )
+
+            pebbler.current_rank = tb
+            pebbler.save()
             performance.save()
 
         # 4) Add the bouts for the next month
