@@ -39,7 +39,7 @@ division_stats = {
 def startup_league(year: int, month: int) -> None:
     def create_pebbler_list() -> List[Pebbler]:
         traits = ["Grace", "Skill", "Power", "Speed"]
-        quirks = ["Oddball", "Even Temper", "Proud Pebble", "Pity Pebbler", "Untouchable"]
+        quirks = ["Oddball", "Even Temper", "Proud Pebble", "Pity Pebble", "Untouchable"]
         abilities = ["Generosity", "Will to Win", "Lucky Seven", "Miracle", "Tip the Scales"]
 
         pebbler_names = [
@@ -73,9 +73,10 @@ def startup_league(year: int, month: int) -> None:
             pebbler_names.remove(name)  
             pebbler_info.append({
                 "name": name,
+                "description": "Member of the Dynamic Dinos. Well-acclimated to windy environments with lots of leaves.",
                 "trait": trait,
                 "quirk": quirk,
-                "ability": ability
+                "ability": ability,
             })
 
         return pebbler_info
@@ -85,6 +86,7 @@ def startup_league(year: int, month: int) -> None:
     for i in range(len(pebbler_info)):
         pebbler_info[i] = Pebbler(
             name=pebbler_info[i]["name"],
+            description=pebbler_info[i]["description"],
             trait=pebbler_info[i]["trait"],
             quirk=pebbler_info[i]["quirk"],
             ability=pebbler_info[i]["ability"],
@@ -289,7 +291,7 @@ def rerank_division(division: str, year: int, month: int) -> None:
     for i, performance in enumerate(performance_list):
         performance.previous_rank = performance.rank
         performance.rank = i + 1
-        performance.pebbler.rank = i + 1
+        performance.pebbler.current_rank = i + 1
         performance.pebbler.save()
         performance.save()
 
@@ -352,6 +354,11 @@ def prepare_next_month(year: int, month: int) -> None:
     next_month = 1 if month == 12 else month + 1
 
     schedule = generate_schedule()
+
+    r.shuffle(schedule)
+
+    for week in schedule:
+        r.shuffle(week["bouts"])
 
     new_divisions = {}
     # If there was not a previous season assign randomly
@@ -442,5 +449,6 @@ if Pebbler.objects.count() == 0:
     now = timezone.now()
     current_year = now.year
     current_month = now.month
-    startup_league(current_year, current_month)
+    # startup_league(current_year, current_month)
+    startup_league(2024, 6)
 update_league()
