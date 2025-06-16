@@ -1,10 +1,13 @@
 from django.db import models
 
-# Create your models here.
 class Pebbler(models.Model):
     name = models.CharField(max_length=20)
 
     pebbles = models.IntegerField(default=0)
+
+    current_rank = models.IntegerField(null=True)
+
+    description = models.CharField(max_length=128)
 
     # Grace, Skill, Power, Speed
     trait = models.CharField(max_length=5)
@@ -19,6 +22,9 @@ class Pebbler(models.Model):
     home_pebbles = models.IntegerField(default=0)
     qp = models.IntegerField(default=0)
     at = models.IntegerField(default=0)
+
+    # Master, All-Star, Professional, Learner 
+    current_division = models.CharField(max_length=12)
 
     masters = models.IntegerField(default=0)
     all_stars = models.IntegerField(default=0)
@@ -39,6 +45,7 @@ class Bout(models.Model):
 
     year = models.IntegerField()
     month = models.IntegerField()
+    day = models.IntegerField()
 
     away_roll = models.IntegerField(null=True)
     home_roll = models.IntegerField(null=True)
@@ -46,13 +53,17 @@ class Bout(models.Model):
     home_quirk = models.BooleanField(default=False)
     away_ability = models.BooleanField(default=False)
     home_ability = models.BooleanField(default=False)
+    away_roll_half = models.IntegerField(null=True)
+    home_roll_half = models.IntegerField(null=True)
     away_roll_final = models.IntegerField(null=True)
     home_roll_final = models.IntegerField(null=True)
-    away_score = models.IntegerField(null=True)
-    home_score = models.IntegerField(null=True)
+    away_score = models.IntegerField(default=0)
+    home_score = models.IntegerField(default=0)
+
+    last_in_day = models.BooleanField()
 
     def __str__(self):
-        return f"{self.division}: {self.away} @ {self.home} ({self.year}-{self.month:02d})"
+        return f"{self.division}: {self.away} @ {self.home} ({self.month:02d}-{self.day:02d}-{self.year})"
 
 class Performance(models.Model):
     pebbler = models.ForeignKey(Pebbler, on_delete=models.CASCADE, related_name='performances')
@@ -86,7 +97,7 @@ class Performance(models.Model):
 
     rank = models.IntegerField()
     previous_rank = models.IntegerField()
-    tiebreaker = models.FloatField()
+    tiebreaker = models.IntegerField()
 
     def __str__(self):
         return f"{self.division}: {self.pebbler} ({self.year}-{self.month:02d})"
