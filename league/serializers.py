@@ -9,17 +9,25 @@ class PebblerRank(serializers.ModelSerializer):
 class PebblerBasic(serializers.ModelSerializer):
     class Meta:
         model = Pebbler
-        fields = ['name', 'current_rank', 'current_division', 'pebbles', 'home_pebbles', 'away_pebbles', 'qp', 'at']
+        fields = [
+            'name', 
+            'current_rank', 
+            'current_division', 
+            'pebbles', 
+            'home_pebbles', 
+            'away_pebbles', 
+            'qp', 
+            'at', 
+            'masters', 
+            'all_stars', 
+            'professionals', 
+            'learners',
+        ]
 
 class PebblerPersonal(serializers.ModelSerializer):
     class Meta:
         model = Pebbler
-        fields = ['description', 'trait', 'quirk', 'ability']
-
-class PebblerDivisionSummary(serializers.ModelSerializer):
-    class Meta:
-        model = Pebbler
-        fields = ['masters', 'all_stars', 'professionals', 'learners']
+        fields = ['name', 'description', 'trait', 'quirk', 'ability']
 
 class BoutSmall(serializers.ModelSerializer):
     away = PebblerRank(read_only=True)
@@ -28,6 +36,7 @@ class BoutSmall(serializers.ModelSerializer):
     class Meta:
         model = Bout
         fields = [
+            'id',
             'away',
             'home',
             'division',
@@ -41,6 +50,14 @@ class BoutSmall(serializers.ModelSerializer):
             'away_score',
             'home_score',
         ]
+
+class BoutFull(serializers.ModelSerializer):
+    away = PebblerPersonal(read_only=True)
+    home = PebblerPersonal(read_only=True)
+
+    class Meta:
+        model = Bout
+        exclude = ['time', 'last_in_day']
 
 class PerformanceMain(serializers.ModelSerializer):
     pebbler = serializers.StringRelatedField()
