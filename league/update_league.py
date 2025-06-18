@@ -98,8 +98,8 @@ def play_bout(bout : Bout) -> None:
             if bout.away_roll + 1 == bout.home_roll and r.random() < sv.trigger_rates["Tip the Scales"] * divison_rate_mult:
                 bout.away_roll_half = bout.away_roll + 1
                 bout.home_roll_half = bout.home_roll - 1
-                home_performance.at += 1
-                home_pebbler.at += 1
+                away_performance.at += 1
+                away_pebbler.at += 1
                 bout.away_ability = True
 
         # Update rolls
