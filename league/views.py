@@ -67,7 +67,7 @@ def get_bouts(request, month, day, year):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    return Response({"month": month, "day" : day, "year": year, "bout_info": bout_info}, status=status.HTTP_200_OK)
+    return Response({"bout_info": bout_info}, status=status.HTTP_200_OK)
 
 # Return the bouts for the requested pebbler and month
 @api_view(['GET'])
