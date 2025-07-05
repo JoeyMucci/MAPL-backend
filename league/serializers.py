@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from .models import *
 
-class PebblerRank(serializers.ModelSerializer):
+class PebblerName(serializers.ModelSerializer):
     class Meta:
         model = Pebbler
-        fields = ['name', 'current_rank']
+        fields = ['name']
 
 class PebblerBasic(serializers.ModelSerializer):
     class Meta:
@@ -30,8 +30,8 @@ class PebblerPersonal(serializers.ModelSerializer):
         fields = ['name', 'description', 'trait', 'quirk', 'ability']
 
 class BoutSmall(serializers.ModelSerializer):
-    away = PebblerRank(read_only=True)
-    home = PebblerRank(read_only=True)
+    away = PebblerName(read_only=True)
+    home = PebblerName(read_only=True)
 
     class Meta:
         model = Bout
