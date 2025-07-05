@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from django.db.models import Avg, Min, Max, Count
+from django.db.models import Avg, Min, Max, Count, Sum, F
 import re
 
 
@@ -86,11 +86,10 @@ def get_pebbler_bouts(request, pebblerName, month, year):
     home_bouts = pebbler.home_bouts.filter(home_roll__isnull=False, month=month, year=year) 
     away_bouts = pebbler.away_bouts.filter(away_roll__isnull=False, month=month, year=year) 
     all_bouts = (home_bouts | away_bouts)
-
     all_bouts_sorted = all_bouts.order_by('time').reverse()
 
     try: 
-        serializer = BoutFull(all_bouts_sorted, many=True)
+        serializer = BoutSmall(all_bouts_sorted, many=True)
     except Exception as e:
         return Response(
             {'error': f'Serializer error: {str(e)}'}, 
@@ -98,6 +97,64 @@ def get_pebbler_bouts(request, pebblerName, month, year):
         )
     
     return Response({"bouts" : serializer.data}, status=status.HTTP_200_OK)
+
+# Return the bouts between pebblerOne and pebblerTwo
+@api_view(['GET'])
+def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
+    pebbler_one_name = camelcase_to_words(pebblerOne)
+    pebbler_two_name = camelcase_to_words(pebblerTwo)
+
+    try:
+        pebbler_one = Pebbler.objects.get(name=pebbler_one_name)
+        pebbler_two = Pebbler.objects.get(name=pebbler_two_name)
+    except Pebbler.DoesNotExist:
+        return Response(
+            {'error': 'One pebbler not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Using related name
+    home_bouts = pebbler_one.home_bouts.filter(home_roll__isnull=False, away=pebbler_two)
+    away_bouts = pebbler_one.away_bouts.filter(away_roll__isnull=False, home=pebbler_two)
+    all_bouts = (home_bouts | away_bouts)
+    all_bouts_sorted = all_bouts.order_by('time').reverse()
+
+    division_pebbles = {division : {"one_score" : 0, "two_score" : 0} for division in divisions}
+    division_wtl = {division: {"one_wins": 0, "two_wins": 0, "ties": 0} for division in divisions}
+
+    for bout in home_bouts:
+        division_pebbles[bout.division]["one_score"] += bout.home_score
+        division_pebbles[bout.division]["two_score"] += bout.away_score
+        if bout.home_roll_final > bout.away_roll_final:
+            division_wtl[bout.division]["one_wins"] += 1
+        elif bout.away_roll_final > bout.home_roll_final:
+            division_wtl[bout.division]["two_wins"] += 1
+        else:
+            division_wtl[bout.division]["ties"] += 1
+
+    for bout in away_bouts:
+        division_pebbles[bout.division]["one_score"] += bout.away_score
+        division_pebbles[bout.division]["two_score"] += bout.home_score
+        if bout.away_roll_final > bout.home_roll_final:
+            division_wtl[bout.division]["one_wins"] += 1
+        elif bout.home_roll_final > bout.away_roll_final:
+            division_wtl[bout.division]["two_wins"] += 1
+        else:
+            division_wtl[bout.division]["ties"] += 1
+
+    try: 
+        serializer = BoutSmall(all_bouts_sorted, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response({
+        "division_pebbles" : division_pebbles,
+        "division_wtl" : division_wtl,
+        "bouts" : serializer.data,
+        }, status=status.HTTP_200_OK)
 
 # Return the bout with matching id
 @api_view(['GET'])
@@ -183,33 +240,15 @@ def get_pebbler_aggregate(request, pebblerName):
     # Using related name, only take completed seasons
     data = pebbler.performances.filter(played=BOUTS_PER_SEASON).values('division').annotate(
         cnt=Count('id'),
-        avg_rank=Avg('rank'),
-        best_rank=Min('rank'),
-        worst_rank=Max('rank'),
-        avg_pebbles=Avg('pebbles'),
-        worst_pebbles=Min('pebbles'),
-        best_pebbles=Max('pebbles'),
-        avg_wins=Avg('wins'),
-        worst_wins=Min('wins'),
-        best_wins=Max('wins'),
-        avg_losses=Avg('losses'),
-        best_losses=Min('losses'),
-        worst_losses=Max('losses'),
-        avg_pf=Avg('pf'),
-        worst_pf=Min('pf'),
-        best_pf=Max('pf'),
-        avg_pa=Avg('pa'),
-        best_pa=Min('pa'),
-        worst_pa=Max('pa'),
-        avg_pd=Avg('pd'),
-        worst_pd=Min('pd'),
-        best_pd=Max('pd'),
-        avg_qp=Avg('qp'),
-        worst_qp=Min('qp'),
-        best_qp=Max('qp'),
-        avg_at=Avg('at'),
-        worst_at=Min('at'),
-        best_at=Max('at'),
+        avg_rank=Avg('rank'), best_rank=Min('rank'), worst_rank=Max('rank'),
+        avg_pebbles=Avg('pebbles'), best_pebbles=Max('pebbles'), worst_pebbles=Min('pebbles'),
+        avg_wins=Avg('wins'), best_wins=Max('wins'), worst_wins=Min('wins'),
+        avg_losses=Avg('losses'), best_losses=Min('losses'), worst_losses=Max('losses'),
+        avg_pf=Avg('pf'), best_pf=Max('pf'), worst_pf=Min('pf'),
+        avg_pa=Avg('pa'), best_pa=Min('pa'), worst_pa=Max('pa'),
+        avg_pd=Avg('pd'), best_pd=Max('pd'), worst_pd=Min('pd'),
+        avg_qp=Avg('qp'), best_qp=Max('qp'), worst_qp=Min('qp'),
+        avg_at=Avg('at'), best_at=Max('at'), worst_at=Min('at'),
     )
 
     return Response(data, status=status.HTTP_200_OK)
