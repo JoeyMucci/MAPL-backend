@@ -244,6 +244,11 @@ def prepare_next_month(year: int, month: int) -> None:
     next_year = year + 1 if month == 12 else year
     next_month = 1 if month == 12 else month + 1
 
+    # Do not prepare the next month before that month has started
+    cur_time = timezone.now() if sv.real_time else datetime(sv.cur_year, sv.cur_month, sv.cur_day, 23, 59, 0, tzinfo=dt_timezone.utc)
+    if cur_time < datetime(next_year, next_month, 1, 0, 0, 0, tzinfo=dt_timezone.utc):
+        return
+
     schedule = sv.generate_schedule()
 
     r.shuffle(schedule)
