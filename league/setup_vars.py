@@ -9,7 +9,7 @@ num_days = 25
 last_division = "Learner"
 
 start_year = 2023
-start_month = 1
+start_month = 12
 
 # REAL_TIME determines whether or not to use to actual time, set to false and modify
 # CUR_YEAR, CUR_MONTH, and CUR_DAY to test the league running for certain amount of time

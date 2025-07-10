@@ -31,6 +31,13 @@ class Pebbler(models.Model):
     professionals = models.IntegerField(default=0)
     learners = models.IntegerField(default=0)
 
+    # Year To Date
+    ytd_pebbles = models.IntegerField(default=0)
+    ytd_away_pebbles = models.IntegerField(default=0)
+    ytd_home_pebbles = models.IntegerField(default=0)
+    ytd_qp = models.IntegerField(default=0)
+    ytd_at = models.IntegerField(default=0)
+
     def __str__(self):
         return self.name
     

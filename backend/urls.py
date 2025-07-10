@@ -12,5 +12,8 @@ urlpatterns = [
     path('api/pebblers/history/<str:pebblerName>/<int:year>', views.get_performance_history, name='pebbler-history'),
     path('api/pebblers/personal/<str:pebblerName>/', views.get_pebbler_personal_info, name='pebbler-personal'),
     path('api/pebblers/summary/<str:pebblerName>/', views.get_pebbler_aggregate, name='pebbler-summary'),
+    path('api/pebblers/ytd/', views.get_ytd_stats, name='pebbler-ytd'),
     path('api/rankings/<int:month>/<int:year>/', views.get_ranked_performances, name='performances-by-month'),
+    path('api/rankings/bookends/', views.get_ranking_bookends, name='top-and-bottom-performances'),
+    path('api/rankings/winners/<int:end_month>/<int:end_year>/', views.get_recent_winners, name='winning-performances'),
 ]

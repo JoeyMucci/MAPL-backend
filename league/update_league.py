@@ -55,6 +55,7 @@ def play_bout(bout : Bout) -> None:
             bout.away_score += sv.division_stats[bout.division]["Quirk"]
             away_performance.qp += sv.division_stats[bout.division]["Quirk"]
             away_pebbler.qp += sv.division_stats[bout.division]["Quirk"]
+            away_pebbler.ytd_qp += sv.division_stats[bout.division]["Quirk"]
 
         if (
             (home_pebbler.quirk == "Oddball" and bout.home_roll % 2 != bout.day % 2 and bout.away_roll % 2 == bout.day % 2) or
@@ -67,6 +68,7 @@ def play_bout(bout : Bout) -> None:
             bout.home_score += sv.division_stats[bout.division]["Quirk"]
             home_performance.qp += sv.division_stats[bout.division]["Quirk"]
             home_pebbler.qp += sv.division_stats[bout.division]["Quirk"]
+            home_pebbler.ytd_qp += sv.division_stats[bout.division]["Quirk"]
 
     def do_abilities(
         bout : Bout,
@@ -83,23 +85,24 @@ def play_bout(bout : Bout) -> None:
 
         if away_pebbler.ability == "Generosity":
             if bout.away_roll == bout.home_roll and r.random() < sv.trigger_rates["Generosity"] * divison_rate_mult:
-                away_draw_mult = 2; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
+                away_draw_mult = 2; away_performance.at += 1; away_pebbler.at += 1; away_pebbler.ytd_at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Will to Win":
             if bout.away_roll == bout.home_roll and r.random() < sv.trigger_rates["Will to Win"] * divison_rate_mult:
                 bout.away_roll_half = sv.rolls[away_pebbler.trait][r.randint(0, 5)]
-                away_win_mult = 2; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
+                away_win_mult = 2; away_performance.at += 1; away_pebbler.at += 1; away_pebbler.ytd_at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Lucky Seven":
             if bout.away_roll > bout.home_roll and r.random() < sv.trigger_rates["Lucky Seven"] * divison_rate_mult:
-                bout.away_roll_half = 7; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
+                bout.away_roll_half = 7; away_performance.at += 1; away_pebbler.at += 1; away_pebbler.ytd_at += 1; bout.away_ability = True
         elif away_pebbler.ability == "Miracle":
             if bout.away_roll < bout.home_roll and r.random() < sv.trigger_rates["Miracle"] * divison_rate_mult:
-                bout.away_roll_half = bout.home_roll; away_performance.at += 1; away_pebbler.at += 1; bout.away_ability = True
+                bout.away_roll_half = bout.home_roll; away_performance.at += 1; away_pebbler.at += 1; away_pebbler.ytd_at += 1; bout.away_ability = True
         else: # Tip the Scales
             if bout.away_roll + 1 == bout.home_roll and r.random() < sv.trigger_rates["Tip the Scales"] * divison_rate_mult:
                 bout.away_roll_half = bout.away_roll + 1
                 bout.home_roll_half = bout.home_roll - 1
                 away_performance.at += 1
                 away_pebbler.at += 1
+                away_pebbler.ytd_at += 1
                 bout.away_ability = True
 
         # Update rolls
@@ -112,23 +115,24 @@ def play_bout(bout : Bout) -> None:
 
         if home_pebbler.ability == "Generosity":
             if bout.home_roll_half == bout.away_roll_half and r.random() < sv.trigger_rates["Generosity"] * divison_rate_mult:
-                home_draw_mult = 2; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
+                home_draw_mult = 2; home_performance.at += 1; home_pebbler.at += 1; home_pebbler.ytd_at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Will to Win":
             if bout.home_roll_half == bout.away_roll_half and r.random() < sv.trigger_rates["Will to Win"] * divison_rate_mult:
                 bout.home_roll_final = sv.rolls[home_pebbler.trait][r.randint(0, 5)]
-                home_win_mult = 2; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
+                home_win_mult = 2; home_performance.at += 1; home_pebbler.at += 1; home_pebbler.ytd_at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Lucky Seven":
             if bout.home_roll_half > bout.away_roll_half and r.random() < sv.trigger_rates["Lucky Seven"] * divison_rate_mult:
-                bout.home_roll_final = 7; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
+                bout.home_roll_final = 7; home_performance.at += 1; home_pebbler.at += 1; home_pebbler.ytd_at += 1; bout.home_ability = True
         elif home_pebbler.ability == "Miracle":
             if bout.home_roll_half < bout.away_roll_half and r.random() < sv.trigger_rates["Miracle"] * divison_rate_mult:
-                bout.home_roll_final = bout.away_roll_half; home_performance.at += 1; home_pebbler.at += 1; bout.home_ability = True
+                bout.home_roll_final = bout.away_roll_half; home_performance.at += 1; home_pebbler.at += 1; home_pebbler.ytd_at += 1; bout.home_ability = True
         else: # Tip the Scales
             if bout.home_roll_half + 1 == bout.away_roll_half and r.random() < sv.trigger_rates["Tip the Scales"] * divison_rate_mult:
                 bout.away_roll_final = bout.away_roll_half - 1
                 bout.home_roll_final = bout.home_roll_half + 1
                 home_performance.at += 1
                 home_pebbler.at += 1
+                home_pebbler.ytd_at += 1
                 bout.home_ability = True
 
         # Update rolls
@@ -199,10 +203,14 @@ def play_bout(bout : Bout) -> None:
     # Update pebbler aggregated stats
     away_pebbler.pebbles += bout.away_score
     away_pebbler.away_pebbles += bout.away_score
+    away_pebbler.ytd_pebbles += bout.away_score
+    away_pebbler.ytd_away_pebbles += bout.away_score
     away_pebbler.save()
 
     home_pebbler.pebbles += bout.home_score
     home_pebbler.home_pebbles += bout.home_score
+    home_pebbler.ytd_pebbles += bout.home_score
+    home_pebbler.ytd_home_pebbles += bout.home_score
     home_pebbler.save()
 
     bout.save()
@@ -228,13 +236,18 @@ def rerank_division(division: str, year: int, month: int) -> None:
         performance.pebbler.save()
         performance.save()
 
-# 1) Promote and demote based on performances
+# 1) Promote/Demote the bottom 5 from each division
 # 2) Update entries in Pebbler table
 # 3) Create new performances for the next month
 # 4) Create new bouts for the next month
 def prepare_next_month(year: int, month: int) -> None:
     next_year = year + 1 if month == 12 else year
     next_month = 1 if month == 12 else month + 1
+
+    # Do not prepare the next month before that month has started
+    cur_time = timezone.now() if sv.real_time else datetime(sv.cur_year, sv.cur_month, sv.cur_day, 23, 59, 0, tzinfo=dt_timezone.utc)
+    if cur_time < datetime(next_year, next_month, 1, 0, 0, 0, tzinfo=dt_timezone.utc):
+        return
 
     schedule = sv.generate_schedule()
 
@@ -274,7 +287,7 @@ def prepare_next_month(year: int, month: int) -> None:
         tiebreakers = [i for i in range(1, 26)]
 
         for pebbler in new_divisions[division]:
-            # 2) Update current division and total division totals 
+            # 2) Update entries in Pebbler table
             pebbler: Pebbler
             pebbler.current_division = division
             match division:
@@ -286,9 +299,16 @@ def prepare_next_month(year: int, month: int) -> None:
                     pebbler.professionals += 1
                 case "Learner":
                     pebbler.learners += 1
-            
 
-            # 3) Add performance for the next month
+            # Wipe YTD stats if starting new year
+            if next_month == 1:
+                pebbler.ytd_pebbles = 0
+                pebbler.ytd_away_pebbles = 0
+                pebbler.ytd_home_pebbles = 0
+                pebbler.ytd_qp = 0
+                pebbler.ytd_at = 0
+
+            # 3) Create new performances for the next month
             tb = r.choice(tiebreakers)
             tiebreakers.remove(tb)
             performance = Performance(
@@ -305,7 +325,7 @@ def prepare_next_month(year: int, month: int) -> None:
             pebbler.save()
             performance.save()
 
-        # 4) Add the bouts for the next month
+        # 4) Create new bouts for the next month
         for i in range(len(schedule)):
             cur_day = i + 1
             time_ticker = datetime(next_year, next_month, cur_day, start_hour, 0, 0, tzinfo=dt_timezone.utc)
