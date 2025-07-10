@@ -313,8 +313,6 @@ def get_ranking_bookends(request):
         elif pebbler.current_rank >= 21:
             data[pebbler.current_division]["trailers"][pebbler.current_rank - 21] = pebbler
 
-    print(data["Master"]["leaders"])
-
     try:
         for division in data:
             for classification in data[division]:
@@ -330,10 +328,19 @@ def get_ranking_bookends(request):
         for classification in data[division]:
             for i in range(len(data[division][classification])):
                 data[division][classification][i]["description"] = (
-                    division + " Rank: " + str(i + 1 + 20 if classification == "trailers" else 0)
+                    division + " Rank: " + str(i + 1 + (20 if classification == "trailers" else 0))
                 )
+
+    flat_data = {
+        "leaders": [],
+        "trailers": [],
+    }
+
+    for classification in flat_data:
+        for division in divisions:
+            flat_data[classification].extend(data[division][classification])
     
-    return Response(data, status=status.HTTP_200_OK)
+    return Response(flat_data, status=status.HTTP_200_OK)
 
 
 # Return top 5 ytd pebblers, and top quirk activators and ability
