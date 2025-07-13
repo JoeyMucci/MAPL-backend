@@ -5,7 +5,6 @@ admin.site.register(Pebbler)
 
 admin.site.register(Performance)
 
-
 class BoutAdmin(admin.ModelAdmin):
     list_display = ['id', 'division', 'quirk_activated_h', 'ability_activated_h', 'quirk_activated_a', 'ability_activated_a']
     list_filter = ['division', 'home_quirk', 'home_ability', 'away_quirk', 'away_ability']

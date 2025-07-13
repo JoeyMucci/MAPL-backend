@@ -16,11 +16,12 @@ def startup_league(year: int, month: int) -> None:
     pebbler_info = sv.pebbler_list.copy()
     for i in range(len(pebbler_info)):
         pebbler_info[i] = Pebbler(
-            name=pebbler_info[i][0],
-            description="A young flier who can channel both light and dark. Carries herself well despite her age.",
-            trait=pebbler_info[i][1],
-            quirk=pebbler_info[i][2],
-            ability=pebbler_info[i][3],
+            name=pebbler_info[i]["name"],
+            description=pebbler_info[i]["description"],
+            isMale=pebbler_info[i]["isMale"],
+            trait=pebbler_info[i]["trait"],
+            quirk=pebbler_info[i]["quirk"],
+            ability=pebbler_info[i]["ability"],
         )
     Pebbler.objects.bulk_create(pebbler_info)
     prepare_next_month(year, month)
