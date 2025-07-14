@@ -10,6 +10,65 @@ def get_news(request, month, day, year):
 
     serializer = BoutFull(bouts, many=True)
 
+    for bout in serializer.data:
+        for side in ["away", "home"]:
+            form = bout[side]["performances"][0]["form"]
+
+            unbeaten = 0
+            winless = 0
+            win = 0
+            loss = 0
+            unbeaten_broke = False
+            winless_broke = False
+            win_broke = False
+            loss_broke = False
+
+            for ch in form[-2::-1]:
+                if unbeaten_broke and winless_broke and win_broke and loss_broke:
+                    break
+                if ch == 'W':
+                    if not win_broke:
+                        win += 1
+                    if not unbeaten_broke:
+                        unbeaten += 1
+                    loss_broke = True
+                    winless_broke = True
+                elif ch == 'L':
+                    if not loss_broke:
+                        loss += 1
+                    if not winless_broke:
+                        winless += 1
+                    win_broke = True
+                    unbeaten_broke = True
+                else:
+                    if not unbeaten_broke:
+                        unbeaten += 1
+                    if not winless_broke:
+                        winless += 1
+                    loss_broke = True
+                    win_broke = True
+                
+            bout[side]["performances"][0]["streaks"] = {
+                "unbeaten" : {
+                    "count": unbeaten + (0 if form[-1] == 'L' else 1),
+                    "type": "snapped" if form[-1] == 'L' else "extended",
+                },
+                "winless" : {
+                    "count": winless + (0 if form[-1] == 'W' else 1),
+                    "type": "snapped" if form[-1] == 'W' else "extended",
+                },
+                "win" : {
+                    "count": win + (1 if form[-1] == 'W' else 0),
+                    "type": "extended" if form[-1] == 'W' else "snapped",
+                },
+                "loss" : {
+                    "count": loss + (1 if form[-1] == 'L' else 0),
+                    "type": "extended" if form[-1] == 'L' else "snapped",
+                },
+            }
+
+            del bout[side]["performances"][0]["form"]
+
     return Response({
         "month": month, 
         "day": day, 

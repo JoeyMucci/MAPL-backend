@@ -13,7 +13,7 @@ start_month = 12
 
 # REAL_TIME determines whether or not to use to actual time, set to false and modify
 # CUR_YEAR, CUR_MONTH, and CUR_DAY to test the league running for certain amount of time
-real_time = False
+real_time = True
 cur_year = 2025
 cur_month = 7
 cur_day = 13

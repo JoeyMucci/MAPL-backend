@@ -9,17 +9,17 @@ from django.utils import timezone
 import datetime
 import os
 
-MAX_DAY = 25
 PROMOTE_DEMOTE_THRESHOLD = 13
+BOUTS_IN_DAY = 48
 
-real_time = False
+real_time = True
 y = 2025
 m = 7
 d = 13
 
 sys_prompts = {
     "Ori" : "You are Ori, a high energy octopus and mother to a newborn. In your response, you should act like you are a detective trying to get the 'scoop' on what is happening in each bout.",
-    "Joey" : "You are Joey, a dignified scholar. In your response, you should treat each pebbler fairly, focusing on their positive traits whenever possible.",
+    "Joey" : "You are Joey, a dignified scholar. In your response, you should insert a few puns as you analyze the bouts.",
     "Filipo" : "You are Filipo, an incredulous parrot. In your response, you should repeat things for emphasis, particularly things that you cannot believe, such as high pebble earnings.",
 }
 
@@ -31,12 +31,71 @@ if real_time:
     d = cur_time.day
 
 reports = Report.objects.all().filter(year=y, month=m, day=d)
+bouts = Bout.objects.filter(month=m, day=d, year=y, away_roll__isnull=False)
 
-if d <= MAX_DAY and len(reports) == 0:
+if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
     day_of_week = datetime.date(y, m, d).strftime('%A')
-    bouts = Bout.objects.filter(month=m, day=d, year=y)
 
     serializer = BoutFull(bouts, many=True)
+
+    for bout in serializer.data:
+        for side in ["away", "home"]:
+            form = bout[side]["performances"][0]["form"]
+
+            unbeaten = 0
+            winless = 0
+            win = 0
+            loss = 0
+            unbeaten_broke = False
+            winless_broke = False
+            win_broke = False
+            loss_broke = False
+
+            for ch in form[-2::-1]:
+                if unbeaten_broke and winless_broke and win_broke and loss_broke:
+                    break
+                if ch == 'W':
+                    if not win_broke:
+                        win += 1
+                    if not unbeaten_broke:
+                        unbeaten += 1
+                    loss_broke = True
+                    winless_broke = True
+                elif ch == 'L':
+                    if not loss_broke:
+                        loss += 1
+                    if not winless_broke:
+                        winless += 1
+                    win_broke = True
+                    unbeaten_broke = True
+                else:
+                    if not unbeaten_broke:
+                        unbeaten += 1
+                    if not winless_broke:
+                        winless += 1
+                    loss_broke = True
+                    win_broke = True
+                
+            bout[side]["performances"][0]["streaks"] = {
+                "unbeaten" : {
+                    "count": unbeaten + (0 if form[-1] == 'L' else 1),
+                    "type": "snapped" if form[-1] == 'L' else "extended",
+                },
+                "winless" : {
+                    "count": winless + (0 if form[-1] == 'W' else 1),
+                    "type": "snapped" if form[-1] == 'W' else "extended",
+                },
+                "win" : {
+                    "count": win + (1 if form[-1] == 'W' else 0),
+                    "type": "extended" if form[-1] == 'W' else "snapped",
+                },
+                "loss" : {
+                    "count": loss + (1 if form[-1] == 'L' else 0),
+                    "type": "extended" if form[-1] == 'L' else "snapped",
+                },
+            }
+
+            del bout[side]["performances"][0]["form"]
 
     league_results = {
         "month": m, 
@@ -56,7 +115,6 @@ if d <= MAX_DAY and len(reports) == 0:
 
     if d >= PROMOTE_DEMOTE_THRESHOLD:
         final_instruction = "7. Mention each pebbler's standing with regards to promotion/demotion"
-
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
@@ -110,7 +168,7 @@ if d <= MAX_DAY and len(reports) == 0:
                     2. Mention any quirk activations
                     3. Mention any ability triggers, including what the outcome of the ability was, in the order they occurred
                     4. Mention how many pebbles each pebbler earned independently
-                    5. Mention if any pebbler extended or snapped a win/loss streak of more than 3 in a row (look at form string, each character represents a win, tie, or loss. Note that today's results have already been appended to the end of the string)
+                    5. Mention if any pebbler extended or snapped a win/loss streak of more than 3 in a row. Also mention if any pebbler extended or snapped an unbeaten/winless streak of more than 5 in a row, but only mention this if it is greater than the corresponding win/loss streak.
                     6. Mention how each pebbler's ranking changed. (from previous_rank to rank)
                     {final_instruction}
 
@@ -120,13 +178,38 @@ if d <= MAX_DAY and len(reports) == 0:
         ],
     )
 
+    title = ""
+    essay = ""
+
     if response.type == "message":
         for block in response.content:
             if block.type == "text":
-                Report.objects.create(
-                    author = Reporter.objects.get(name=author),
-                    year = y,
-                    month = m,
-                    day = d,
-                    content = block.text,
+                essay = block.text
+
+                response = anthropic.Anthropic().messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=20000,
+                    system=sys_prompts[author].split(".")[0],
+                    messages=[
+                        {"role": "user", "content":
+                            f"""
+                            Create a 10-20 word title for the following article, summarizing the most exciting bout result or finding a common theme between several bouts. 
+
+                            {essay}
+                            """
+                         }
+                    ],
                 )
+
+                if response.type == "message":
+                    for block in response.content:
+                        if block.type == "text":
+                            title = block.text
+                            Report.objects.create(
+                                author = Reporter.objects.get(name=author),
+                                year = y,
+                                month = m,
+                                day = d,
+                                content = essay,
+                                title = title,
+                            )

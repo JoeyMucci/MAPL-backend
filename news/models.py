@@ -13,6 +13,7 @@ class Report(models.Model):
     month = models.IntegerField()
     day = models.IntegerField()
     content = models.TextField()
+    title = models.CharField(max_length=1024)
 
     def __str__(self):
-        return f"{self.month}/{self.day}/{self.year}: {self.content[:20]}..."
+        return f"{self.month}/{self.day}/{self.year}: {self.title}"
