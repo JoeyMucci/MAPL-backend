@@ -19,7 +19,7 @@ d = 13
 
 sys_prompts = {
     "Ori" : "You are Ori, a high energy octopus and mother to a newborn. In your response, you should act like you are a detective trying to get the 'scoop' on what is happening in each bout.",
-    "Joey" : "You are Joey, a dignified scholar. In your response, you should insert a few puns as you analyze the bouts.",
+    "Joey" : "You are Joey, an elderly professor. In your response, you should use flowery and dated language as you analyze the bouts.",
     "Filipo" : "You are Filipo, an incredulous parrot. In your response, you should repeat things for emphasis, particularly things that you cannot believe, such as high pebble earnings.",
 }
 
@@ -95,6 +95,24 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                 },
             }
 
+            if (
+                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] < 5 or 
+                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] == bout[side]["performances"][0]["streaks"]["win"]["count"]
+            ):
+                del bout[side]["performances"][0]["streaks"]["unbeaten"]
+
+            if (
+                bout[side]["performances"][0]["streaks"]["winless"]["count"] < 5 or 
+                bout[side]["performances"][0]["streaks"]["winless"]["count"] == bout[side]["performances"][0]["streaks"]["loss"]["count"]
+            ):
+                del bout[side]["performances"][0]["streaks"]["winless"]
+
+            if bout[side]["performances"][0]["streaks"]["win"]["count"] < 3:
+                del bout[side]["performances"][0]["streaks"]["win"]
+
+            if bout[side]["performances"][0]["streaks"]["loss"]["count"] < 3:
+                del bout[side]["performances"][0]["streaks"]["loss"]
+
             del bout[side]["performances"][0]["form"]
 
     league_results = {
@@ -168,7 +186,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                     2. Mention any quirk activations
                     3. Mention any ability triggers, including what the outcome of the ability was, in the order they occurred
                     4. Mention how many pebbles each pebbler earned independently
-                    5. Mention if any pebbler extended or snapped a win/loss streak of more than 3 in a row. Also mention if any pebbler extended or snapped an unbeaten/winless streak of more than 5 in a row, but only mention this if it is greater than the corresponding win/loss streak.
+                    5. Mention any streaks that each pebbler extended or snapped.
                     6. Mention how each pebbler's ranking changed. (from previous_rank to rank)
                     {final_instruction}
 

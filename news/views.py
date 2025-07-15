@@ -67,6 +67,24 @@ def get_news(request, month, day, year):
                 },
             }
 
+            if (
+                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] < 5 or 
+                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] == bout[side]["performances"][0]["streaks"]["win"]["count"]
+            ):
+                del bout[side]["performances"][0]["streaks"]["unbeaten"]
+
+            if (
+                bout[side]["performances"][0]["streaks"]["winless"]["count"] < 5 or 
+                bout[side]["performances"][0]["streaks"]["winless"]["count"] == bout[side]["performances"][0]["streaks"]["loss"]["count"]
+            ):
+                del bout[side]["performances"][0]["streaks"]["winless"]
+
+            if bout[side]["performances"][0]["streaks"]["win"]["count"] < 3:
+                del bout[side]["performances"][0]["streaks"]["win"]
+
+            if bout[side]["performances"][0]["streaks"]["loss"]["count"] < 3:
+                del bout[side]["performances"][0]["streaks"]["loss"]
+
             del bout[side]["performances"][0]["form"]
 
     return Response({
