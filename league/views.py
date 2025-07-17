@@ -5,7 +5,6 @@ from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from django.db.models import Avg, Min, Max, Count
-import random as r
 import re
 import calendar
 

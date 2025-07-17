@@ -1,11 +1,67 @@
-from league.models import *
-from .serializers import *
+from news.models import *
+from news.serializers import *
 from rest_framework.response import Response
 from rest_framework import status
+import re
 from rest_framework.decorators import api_view
 
+def camelcase_to_words(s):
+    words = re.sub('([a-z])([A-Z])', r'\1 \2', s)
+    return words.title()
+
 @api_view(['GET'])
-def get_news(request, month, day, year):
+def get_author(request, authorName):
+    author_name = camelcase_to_words(authorName)
+
+    try:
+        author = Reporter.objects.get(name=author_name)
+    except Pebbler.DoesNotExist:
+        return Response(
+            {'error': 'Pebbler not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        serializer = ReporterSerializer(author)
+        serialized_author = serializer.data
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serialized_author, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_news(request, month, year):
+    reports = Report.objects.filter(month=month, year=year).order_by("-day")
+
+    try:
+        serializer = ReportSerializer(reports, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_article(request, id):
+    report = Report.objects.get(id=id)
+
+    try:
+        serializer = ReportSerializer(report)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_news_test(request, month, day, year):
     bouts = Bout.objects.filter(month=month, day=day, year=year)
 
     serializer = BoutFull(bouts, many=True)
@@ -13,6 +69,15 @@ def get_news(request, month, day, year):
     for bout in serializer.data:
         for side in ["away", "home"]:
             form = bout[side]["performances"][0]["form"]
+
+            change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
+
+            if change < 0:
+                bout[side]["performances"][0]["ranking_change"] = "Down " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            elif change > 0:
+                bout[side]["performances"][0]["ranking_change"] = "Up " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            else:
+                bout[side]["performances"][0]["ranking_change"] = "Rank stays the same"
 
             unbeaten = 0
             winless = 0

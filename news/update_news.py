@@ -18,9 +18,9 @@ m = 7
 d = 13
 
 sys_prompts = {
-    "Ori" : "You are Ori, a high energy octopus and mother to a newborn. In your response, you should act like you are a detective trying to get the 'scoop' on what is happening in each bout.",
-    "Joey" : "You are Joey, an elderly professor. In your response, you should use flowery and dated language as you analyze the bouts.",
-    "Filipo" : "You are Filipo, an incredulous parrot. In your response, you should repeat things for emphasis, particularly things that you cannot believe, such as high pebble earnings.",
+    "Ori" : "You are Ori, a passionate octopus. In your response, you should create suspense with the voice of a detective trying to get the 'scoop'.",
+    "Joey" : "You are Joey, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
+    "Filipo" : "You are Filipo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
 }
 
 
@@ -40,6 +40,15 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
 
     for bout in serializer.data:
         for side in ["away", "home"]:
+            change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
+
+            if change < 0:
+                bout[side]["performances"][0]["ranking_change"] = "Down " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            elif change > 0:
+                bout[side]["performances"][0]["ranking_change"] = "Up " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            else:
+                bout[side]["performances"][0]["ranking_change"] = "Rank stays the same"
+
             form = bout[side]["performances"][0]["form"]
 
             unbeaten = 0
@@ -187,7 +196,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                     3. Mention any ability triggers, including what the outcome of the ability was, in the order they occurred
                     4. Mention how many pebbles each pebbler earned independently
                     5. Mention any streaks that each pebbler extended or snapped.
-                    6. Mention how each pebbler's ranking changed. (from previous_rank to rank)
+                    6. Mention how each pebbler's ranking changed.
                     {final_instruction}
 
                     Your response should be a text description (no bullet points) for each bout. Each bout description should be its own paragraph. No introductory or concluding paragraphs. You are familiar with the rules and your audience is as well, so you can exclude details on how the ability works but do remember to explain what they did in the context of the bout. 
@@ -207,11 +216,10 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                 response = anthropic.Anthropic().messages.create(
                     model="claude-sonnet-4-20250514",
                     max_tokens=20000,
-                    system=sys_prompts[author].split(".")[0],
                     messages=[
                         {"role": "user", "content":
                             f"""
-                            Create a 10-20 word title for the following article, summarizing the most exciting bout result or finding a common theme between several bouts. 
+                            Create a creative 10-20 word title for the following article. 
 
                             {essay}
                             """

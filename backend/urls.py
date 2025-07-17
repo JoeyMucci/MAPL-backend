@@ -18,5 +18,8 @@ urlpatterns = [
     path('api/rankings/bookends/', views.get_ranking_bookends, name='top-and-bottom-performances'),
     path('api/rankings/winners/<int:end_month>/<int:end_year>/', views.get_recent_winners, name='winning-performances'),
 
-    path('api/news/<int:month>/<int:day>/<int:year>', news_views.get_news, name='news-by-day'),
+    path('api/news/<int:id>/', news_views.get_article, name='specific-news'),
+    path('api/news/<int:month>/<int:year>/', news_views.get_news, name='news-by-month'),
+    path('api/news/<int:month>/<int:day>/<int:year>/', news_views.get_news_test, name='claude-data'),
+    path('api/news/author/<str:authorName>/', news_views.get_author, name='author'),
 ]

@@ -1,5 +1,17 @@
 from rest_framework import serializers
 from league.models import *
+from news.models import *
+
+class ReporterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reporter
+        fields = ["description"]
+
+class ReportSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    class Meta:
+        model = Report
+        fields = ["author", "title", "content", "id", "month", "day", "year"]
 
 class PebblerFull(serializers.ModelSerializer):
     performances = serializers.SerializerMethodField()
