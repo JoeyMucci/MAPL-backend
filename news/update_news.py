@@ -10,6 +10,7 @@ import datetime
 import os
 
 PROMOTE_DEMOTE_THRESHOLD = 13
+FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
 real_time = True
@@ -18,7 +19,7 @@ m = 7
 d = 13
 
 sys_prompts = {
-    "Ori" : "You are Ori, a passionate octopus. In your response, you should create suspense with the voice of a detective trying to get the 'scoop'.",
+    "Ori" : "You are Ori, a passionate octopus. In your response, you should employ an excited and optimistic tone for what is coming next.",
     "Joey" : "You are Joey, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
     "Filipo" : "You are Filipo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
 }
@@ -142,6 +143,9 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
 
     if d >= PROMOTE_DEMOTE_THRESHOLD:
         final_instruction = "7. Mention each pebbler's standing with regards to promotion/demotion"
+    
+    if d == FINAL_DAY:
+        final_instruction = "7. Mention whether each pebbler got promoted, demoted, or stayed in the same division"
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
@@ -183,14 +187,17 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
 
                     {league_results}
 
+                    Your task is to create a report meant to be read in print. As such, only include words in the voice of {author}.
+
                     Report on a bout if and only if it meets at least one of the following conditions:
                     1. At least one pebbler triggered their ability
                     2. Each pebbler is named in the other's description
                     3. Both pebblers are members of the same group (tell from description)
                     3. Both pebblers in the bout were in ranks 1-5 before the bout (previous_rank)
                     4. Both pebblers in the bout are in ranks 21-25 before the bout (previous_rank)
+                    5. If there are less than 3 bouts that meet the conditions, pick random bouts to reach at least 3.
 
-                    Report on bouts in this fashion:
+                    Report on bouts in this format:
                     1. Mention the initial rolls
                     2. Mention any quirk activations
                     3. Mention any ability triggers, including what the outcome of the ability was, in the order they occurred
@@ -199,7 +206,10 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                     6. Mention how each pebbler's ranking changed.
                     {final_instruction}
 
-                    Your response should be a text description (no bullet points) for each bout. Each bout description should be its own paragraph. No introductory or concluding paragraphs. You are familiar with the rules and your audience is as well, so you can exclude details on how the ability works but do remember to explain what they did in the context of the bout. 
+                    Your response should be in this format:
+                    1. Brief introductory paragraph
+                    2. Paragraph for each bout
+                    3. Brief conclusion paragraph 
                     '''
             }
         ],
@@ -216,10 +226,11 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                 response = anthropic.Anthropic().messages.create(
                     model="claude-sonnet-4-20250514",
                     max_tokens=20000,
+                    system=sys_prompts[author].split('.')[0],
                     messages=[
                         {"role": "user", "content":
                             f"""
-                            Create a creative 10-20 word title for the following article. 
+                            Create a creative 10-20 word title for the following article.
 
                             {essay}
                             """

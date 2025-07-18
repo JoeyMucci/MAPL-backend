@@ -5,7 +5,7 @@ from news.models import *
 class ReporterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reporter
-        fields = ["description"]
+        fields = ["description", "name"]
 
 class ReportSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
