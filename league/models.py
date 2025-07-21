@@ -8,6 +8,7 @@ class Pebbler(models.Model):
     current_rank = models.IntegerField(null=True)
 
     description = models.CharField(max_length=128)
+    isMale = models.BooleanField()
 
     # Grace, Skill, Power, Speed
     trait = models.CharField(max_length=5)
