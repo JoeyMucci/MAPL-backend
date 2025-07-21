@@ -35,23 +35,32 @@ def get_author(request, authorName):
 @api_view(['GET'])
 def get_news(request, month, year):
     reports = Report.objects.filter(month=month, year=year).order_by("-day")
+    data = {
+        "Merged": [],
+        "Ari": [],
+        "Patrick": [],
+        "Lippo": [],
+    }
 
     try:
-        serializer = ReportSerializer(reports, many=True)
+        for report in reports:
+            serializer = SmallReportSerializer(report)
+            data[serializer.data["author"]].append(serializer.data)
+            data["Merged"].append(serializer.data)
     except Exception as e:
         return Response(
             {'error': f'Serializer error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_article(request, id):
     report = Report.objects.get(id=id)
 
     try:
-        serializer = ReportSerializer(report)
+        serializer = FullReportSerializer(report)
     except Exception as e:
         return Response(
             {'error': f'Serializer error: {str(e)}'}, 

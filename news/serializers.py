@@ -7,7 +7,13 @@ class ReporterSerializer(serializers.ModelSerializer):
         model = Reporter
         fields = ["description", "name"]
 
-class ReportSerializer(serializers.ModelSerializer):
+class SmallReportSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    class Meta:
+        model = Report
+        fields = ["author", "title", "id", "month", "day", "year"]
+
+class FullReportSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = Report

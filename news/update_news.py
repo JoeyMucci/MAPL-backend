@@ -25,6 +25,30 @@ sys_prompts = {
 }
 
 
+reporters = Reporter.objects.all()
+
+if len(reporters) == 0:
+    filipo = Reporter(
+        name = "Filipo",
+        description = '''An incredulous parrot and boisterous reporter. Often repeats details that are particularly amazing 
+        in his reporting. Some have speculated that he is related to a certain pebbler, although no one can say for sure.'''
+    )
+
+    ori = Reporter(
+        name = "Ori",
+        description = '''An octopus mother and industrious reporter. Is motivated to always get the scoop on the latest happenings 
+        in the MAPL. Once held a pessimistic world view, but had a change of heart thanks to encounters with a kind soul.'''
+    )
+
+    joey = Reporter(
+        name = "Joey",
+        description = '''A scholarly bear and detailed reporter. Likes to use his extensive vocabulary and deep knowledge of 
+        the pebblers while reporting. In his free time, enjoys following or curating competitions of all varieties.'''
+    )
+    
+    Reporter.objects.bulk_create([filipo, ori, joey])
+
+
 if real_time:
     cur_time = timezone.now()
     y = cur_time.year
