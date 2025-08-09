@@ -13,40 +13,40 @@ PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = True
+real_time = False
 y = 2025
 m = 7
-d = 13
+d = 25
 
 sys_prompts = {
-    "Ori" : "You are Ori, a passionate octopus. In your response, you should employ an excited and optimistic tone for what is coming next.",
-    "Joey" : "You are Joey, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
-    "Filipo" : "You are Filipo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
+    "Ari" : "You are Ari, a passionate octopus. In your response, you should employ an excited and optimistic tone for what is coming next.",
+    "Patrick" : "You are Patrick, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
+    "Lippo" : "You are Lippo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
 }
 
 
 reporters = Reporter.objects.all()
 
 if len(reporters) == 0:
-    filipo = Reporter(
-        name = "Filipo",
+    lippo = Reporter(
+        name = "Lippo",
         description = '''An incredulous parrot and boisterous reporter. Often repeats details that are particularly amazing 
         in his reporting. Some have speculated that he is related to a certain pebbler, although no one can say for sure.'''
     )
 
-    ori = Reporter(
-        name = "Ori",
+    ari = Reporter(
+        name = "ari",
         description = '''An octopus mother and industrious reporter. Is motivated to always get the scoop on the latest happenings 
         in the MAPL. Once held a pessimistic world view, but had a change of heart thanks to encounters with a kind soul.'''
     )
 
-    joey = Reporter(
-        name = "Joey",
+    patrick = Reporter(
+        name = "patrick",
         description = '''A scholarly bear and detailed reporter. Likes to use his extensive vocabulary and deep knowledge of 
         the pebblers while reporting. In his free time, enjoys following or curating competitions of all varieties.'''
     )
     
-    Reporter.objects.bulk_create([filipo, ori, joey])
+    Reporter.objects.bulk_create([lippo, ari, patrick])
 
 
 if real_time:
@@ -156,12 +156,12 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
         "bouts": serializer.data
     }
 
-    author = "Ori"
+    author = "Ari"
 
     if day_of_week == "Tuesday" or day_of_week == "Thursday":
-        author = "Joey"
+        author = "Patrick"
     elif day_of_week == "Saturday" or day_of_week == "Sunday":
-        author = "Filipo"
+        author = "Lippo"
 
     final_instruction = ""
 
@@ -203,7 +203,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                     Here is a list of what the abilities do:
                     Miracle: If trailing opponent, upgrade roll to opponent's roll
                     Lucky Seven: If leading opponent, upgrade roll to 7
-                    Generosity: If tied with opponent, double draw bonus
+                    Generosity: If tied with opponent, double tie bonus
                     Will to Win: If tied with opponent, reroll and double win bonus
                     Tip the Scales: If trailing by one, switch rolls with opponent
 
