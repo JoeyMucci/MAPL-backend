@@ -99,9 +99,8 @@ def get_pebbler_bouts(request, pebblerName, month, year):
     
     return Response({"bouts" : serializer.data}, status=status.HTTP_200_OK)
 
-# Return the bouts between pebblerOne and pebblerTwo
-@api_view(['GET'])
-def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
+
+def get_rivalry_bouts_helper(pebblerOne, pebblerTwo, includeBouts):
     pebbler_one_name = camelcase_to_words(pebblerOne)
     pebbler_two_name = camelcase_to_words(pebblerTwo)
 
@@ -110,7 +109,7 @@ def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
         pebbler_two = Pebbler.objects.get(name=pebbler_two_name)
     except Pebbler.DoesNotExist:
         return Response(
-            {'error': 'One pebbler not found'}, 
+            {'error': 'At least one pebbler not found'}, 
             status=status.HTTP_404_NOT_FOUND
         )
     
@@ -143,19 +142,30 @@ def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
         else:
             division_wtl[bout.division]["ties"] += 1
 
-    try: 
-        serializer = BoutSmall(all_bouts_sorted, many=True)
-    except Exception as e:
-        return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    
-    return Response({
-        "division_pebbles" : division_pebbles,
-        "division_wtl" : division_wtl,
-        "bouts" : serializer.data,
-        }, status=status.HTTP_200_OK)
+    if includeBouts:
+        try: 
+            serializer = BoutSmall(all_bouts_sorted, many=True)
+        except Exception as e:
+            return Response(
+                {'error': f'Serializer error: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return {
+            "division_pebbles" : division_pebbles,
+            "division_wtl" : division_wtl,
+            "bouts" : serializer.data,
+        }
+    else:
+        return {
+            "division_pebbles" : division_pebbles,
+            "division_wtl" : division_wtl,
+        }
+
+# Return the bouts between pebblerOne and pebblerTwo
+@api_view(['GET'])
+def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
+    return Response(get_rivalry_bouts_helper(pebblerOne, pebblerTwo, includeBouts=True), status=status.HTTP_200_OK)
 
 # Return the bout with matching id
 @api_view(['GET'])
@@ -461,3 +471,19 @@ def get_hot_bouts(request):
     
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+# Return rivalry information for the next 5 bouts
+@api_view(['GET'])
+def get_hot_rivalries(request):
+    hot_bouts = Bout.objects.filter(away_roll__isnull=True).order_by('time')[:5]
+
+    rivalry_info = []
+
+    for hot_bout in hot_bouts:
+        rivalry_info.append({
+            'one': hot_bout.away.name,
+            'two': hot_bout.home.name,
+            'data': get_rivalry_bouts_helper(hot_bout.away.name, hot_bout.home.name, includeBouts=False),
+        })
+
+    return Response(rivalry_info, status=status.HTTP_200_OK)
