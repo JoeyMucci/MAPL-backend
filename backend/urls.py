@@ -24,4 +24,5 @@ urlpatterns = [
     path('api/news/<int:month>/<int:year>/', news_views.get_news, name='news-by-month'),
     path('api/news/<int:month>/<int:day>/<int:year>/', news_views.get_news_test, name='claude-data'),
     path('api/news/author/<str:authorName>/', news_views.get_author, name='author'),
+    path('api/hot/news/', news_views.get_hot_press, name='hot-press'),
 ]

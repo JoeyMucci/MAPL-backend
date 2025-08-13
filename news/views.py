@@ -170,3 +170,18 @@ def get_news_test(request, month, day, year):
         "bouts": serializer.data}, 
         status=status.HTTP_200_OK
     )
+
+# Return the last 5 articles
+@api_view(['GET'])
+def get_hot_press(request):
+    reports = Report.objects.order_by('-year', '-month', '-day')[:5]
+
+    try:
+        serializer = SmallReportSerializer(reports, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
