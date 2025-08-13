@@ -88,6 +88,8 @@ def get_news_test(request, month, day, year):
             else:
                 bout[side]["performances"][0]["ranking_change"] = "Rank stays the same"
 
+            # TODO Implement more explicit labeling for the final day
+
             unbeaten = 0
             winless = 0
             win = 0

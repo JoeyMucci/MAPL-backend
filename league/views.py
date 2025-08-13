@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from django.db.models import Avg, Min, Max, Count, F
+from django.db.models import Avg, Min, Max, Count, F, Q
 import re
 import calendar
 
@@ -444,3 +444,20 @@ def get_hot_pebblers(request, month, year):
         )
     
     return Response(performance_info, status=status.HTTP_200_OK)
+
+
+# Return the five most recent bouts with an ability trigger
+@api_view(['GET'])
+def get_hot_bouts(request):
+    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True)).order_by('time').reverse()[:5]
+
+    try:
+        serializer = BoutSmall(hot_bouts, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
