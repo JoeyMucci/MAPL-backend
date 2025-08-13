@@ -17,9 +17,13 @@ urlpatterns = [
     path('api/rankings/<int:month>/<int:year>/', views.get_ranked_performances, name='performances-by-month'),
     path('api/rankings/bookends/', views.get_ranking_bookends, name='top-and-bottom-performances'),
     path('api/rankings/winners/<int:end_month>/<int:end_year>/', views.get_recent_winners, name='winning-performances'),
+    path('api/hot/pebblers/<int:month>/<int:year>/', views.get_hot_pebblers, name='hot-pebblers'),
+    path('api/hot/bouts/', views.get_hot_bouts, name='hot-bouts'),
+    path('api/hot/rivalries/', views.get_hot_rivalries, name='hot-rivalries'),
 
     path('api/news/<int:id>/', news_views.get_article, name='specific-news'),
     path('api/news/<int:month>/<int:year>/', news_views.get_news, name='news-by-month'),
     path('api/news/<int:month>/<int:day>/<int:year>/', news_views.get_news_test, name='claude-data'),
     path('api/news/author/<str:authorName>/', news_views.get_author, name='author'),
+    path('api/hot/news/', news_views.get_hot_press, name='hot-press'),
 ]

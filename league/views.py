@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from django.db.models import Avg, Min, Max, Count
+from django.db.models import Avg, Min, Max, Count, F, Q
 import re
 import calendar
 
@@ -99,9 +99,8 @@ def get_pebbler_bouts(request, pebblerName, month, year):
     
     return Response({"bouts" : serializer.data}, status=status.HTTP_200_OK)
 
-# Return the bouts between pebblerOne and pebblerTwo
-@api_view(['GET'])
-def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
+
+def get_rivalry_bouts_helper(pebblerOne, pebblerTwo, includeBouts):
     pebbler_one_name = camelcase_to_words(pebblerOne)
     pebbler_two_name = camelcase_to_words(pebblerTwo)
 
@@ -110,7 +109,7 @@ def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
         pebbler_two = Pebbler.objects.get(name=pebbler_two_name)
     except Pebbler.DoesNotExist:
         return Response(
-            {'error': 'One pebbler not found'}, 
+            {'error': 'At least one pebbler not found'}, 
             status=status.HTTP_404_NOT_FOUND
         )
     
@@ -143,19 +142,30 @@ def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
         else:
             division_wtl[bout.division]["ties"] += 1
 
-    try: 
-        serializer = BoutSmall(all_bouts_sorted, many=True)
-    except Exception as e:
-        return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    
-    return Response({
-        "division_pebbles" : division_pebbles,
-        "division_wtl" : division_wtl,
-        "bouts" : serializer.data,
-        }, status=status.HTTP_200_OK)
+    if includeBouts:
+        try: 
+            serializer = BoutSmall(all_bouts_sorted, many=True)
+        except Exception as e:
+            return Response(
+                {'error': f'Serializer error: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return {
+            "division_pebbles" : division_pebbles,
+            "division_wtl" : division_wtl,
+            "bouts" : serializer.data,
+        }
+    else:
+        return {
+            "division_pebbles" : division_pebbles,
+            "division_wtl" : division_wtl,
+        }
+
+# Return the bouts between pebblerOne and pebblerTwo
+@api_view(['GET'])
+def get_rivalry_bouts(request, pebblerOne, pebblerTwo):
+    return Response(get_rivalry_bouts_helper(pebblerOne, pebblerTwo, includeBouts=True), status=status.HTTP_200_OK)
 
 # Return the bout with matching id
 @api_view(['GET'])
@@ -416,3 +426,64 @@ def get_ytd_stats(request):
         abilities.data[i]["description"] = atStrs[i]
     
     return Response({"pebbles": pebbles.data, "quirks": quirks.data, "abilities": abilities.data}, status=status.HTTP_200_OK)
+
+
+# Return the pebbler with the greatest ranking change in each division
+# Tiebreaker is higher rank (i.e. 15->10 would take precedence over 20->15)
+@api_view(['GET'])
+def get_hot_pebblers(request, month, year):
+    performances = Performance.objects.filter(month=month, year=year)
+
+    try:
+        performance_info = {}
+        for division in divisions:
+            hot_perf= performances.filter(division=division).order_by(
+                F('rank') - F('previous_rank'),
+                'rank'
+            ).first()
+
+            # Implement as list for extensibility to top X hot pebblers
+            hot_pebbler = [hot_perf.pebbler]
+            serializer = PebblerPersonal(hot_pebbler, many=True)
+            serializer.data[0]["description"] = f'{hot_perf.previous_rank}->{hot_perf.rank}'
+            performance_info[division] = serializer.data
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(performance_info, status=status.HTTP_200_OK)
+
+
+# Return the five most recent bouts with an ability trigger
+@api_view(['GET'])
+def get_hot_bouts(request):
+    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True)).order_by('time').reverse()[:5]
+
+    try:
+        serializer = BoutSmall(hot_bouts, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Return rivalry information for the next 5 bouts
+@api_view(['GET'])
+def get_hot_rivalries(request):
+    hot_bouts = Bout.objects.filter(away_roll__isnull=True).order_by('time')[:5]
+
+    rivalry_info = []
+
+    for hot_bout in hot_bouts:
+        rivalry_info.append({
+            'one': hot_bout.away.name,
+            'two': hot_bout.home.name,
+            'data': get_rivalry_bouts_helper(hot_bout.away.name, hot_bout.home.name, includeBouts=False),
+        })
+
+    return Response(rivalry_info, status=status.HTTP_200_OK)

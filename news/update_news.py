@@ -13,7 +13,7 @@ PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = False
+real_time = True
 y = 2025
 m = 7
 d = 25
@@ -35,13 +35,13 @@ if len(reporters) == 0:
     )
 
     ari = Reporter(
-        name = "ari",
+        name = "Ari",
         description = '''An octopus mother and industrious reporter. Is motivated to always get the scoop on the latest happenings 
         in the MAPL. Once held a pessimistic world view, but had a change of heart thanks to encounters with a kind soul.'''
     )
 
     patrick = Reporter(
-        name = "patrick",
+        name = "Patrick",
         description = '''A scholarly bear and detailed reporter. Likes to use his extensive vocabulary and deep knowledge of 
         the pebblers while reporting. In his free time, enjoys following or curating competitions of all varieties.'''
     )
