@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from django.db.models import Avg, Min, Max, Count
+from django.db.models import Avg, Min, Max, Count, F
 import re
 import calendar
 
@@ -416,3 +416,31 @@ def get_ytd_stats(request):
         abilities.data[i]["description"] = atStrs[i]
     
     return Response({"pebbles": pebbles.data, "quirks": quirks.data, "abilities": abilities.data}, status=status.HTTP_200_OK)
+
+
+# Return the pebbler with the greatest ranking change in each division
+# Tiebreaker is higher rank (i.e. 15->10 would take precedence over 20->15)
+@api_view(['GET'])
+def get_hot_pebblers(request, month, year):
+    performances = Performance.objects.filter(month=month, year=year)
+
+    try:
+        performance_info = {}
+        for division in divisions:
+            hot_perf= performances.filter(division=division).order_by(
+                F('rank') - F('previous_rank'),
+                'rank'
+            ).first()
+
+            # Implement as list for extensibility to top X hot pebblers
+            hot_pebbler = [hot_perf.pebbler]
+            serializer = PebblerPersonal(hot_pebbler, many=True)
+            serializer.data[0]["description"] = f'{hot_perf.previous_rank}->{hot_perf.rank}'
+            performance_info[division] = serializer.data
+    except Exception as e:
+        return Response(
+            {'error': f'Serializer error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(performance_info, status=status.HTTP_200_OK)
