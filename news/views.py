@@ -26,7 +26,7 @@ def get_author(request, authorName):
         serialized_author = serializer.data
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -49,7 +49,7 @@ def get_news(request, month, year):
             data["Merged"].append(serializer.data)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -63,7 +63,7 @@ def get_article(request, id):
         serializer = FullReportSerializer(report)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -180,7 +180,7 @@ def get_hot_press(request):
         serializer = SmallReportSerializer(reports, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     

@@ -43,7 +43,7 @@ def get_pebbler_info(pebblerName, PebblerSerializer):
         serialized_pebbler = serializer.data
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -64,7 +64,7 @@ def get_bouts(request, month, day, year):
             bout_info[division] = serialized_bouts
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -93,7 +93,7 @@ def get_pebbler_bouts(request, pebblerName, month, year):
         serializer = BoutSmall(all_bouts_sorted, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -147,7 +147,7 @@ def get_rivalry_bouts_helper(pebblerOne, pebblerTwo, includeBouts):
             serializer = BoutSmall(all_bouts_sorted, many=True)
         except Exception as e:
             return Response(
-                {'error': f'Serializer error: {str(e)}'}, 
+                {'error': f'Serializing error: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
@@ -175,7 +175,7 @@ def get_bout_by_id(request, id):
         serializer = BoutFull(bout)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -203,7 +203,7 @@ def get_ranked_performances(request, month, year):
             performance_info[division] = serializer.data
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -229,7 +229,7 @@ def get_performance_history(request, pebblerName, year):
         serializer = PerformanceSummary(performances, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -290,7 +290,7 @@ def get_recent_winners(request, end_month, end_year):
         serializer = PebblerPersonal(pebblers, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'},
+            {'error': f'Serializing error: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -329,7 +329,7 @@ def get_ranking_bookends(request):
                 data[division][classification] = serializer.data
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
@@ -416,7 +416,7 @@ def get_ytd_stats(request):
         abilities = PebblerPersonal(atList, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -445,16 +445,26 @@ def get_hot_pebblers(request, month, year):
             # Implement as list for extensibility to top X hot pebblers
             hot_pebbler = [hot_perf.pebbler]
             serializer = PebblerPersonal(hot_pebbler, many=True)
-            serializer.data[0]["description"] = f'{hot_perf.previous_rank}->{hot_perf.rank}'
-            performance_info[division] = serializer.data
+
+            # Using related name
+            home_bouts = hot_pebbler[0].home_bouts.filter(home_roll__isnull=False, month=month, year=year) 
+            away_bouts = hot_pebbler[0].away_bouts.filter(away_roll__isnull=False, month=month, year=year) 
+            all_bouts = (home_bouts | away_bouts)
+
+            if len(all_bouts) == 0:
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                last_bout = all_bouts.order_by('time').reverse().first()
+                pebble_gain = last_bout.away_score if last_bout.away == hot_pebbler[0] else last_bout.home_score
+                serializer.data[0]["description"] = f'''{hot_perf.pebbles - pebble_gain}->{hot_perf.pebbles} {hot_perf.previous_rank}->{hot_perf.rank}'''
+                performance_info[division] = serializer.data
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
     return Response(performance_info, status=status.HTTP_200_OK)
-
 
 # Return the five most recent bouts with an ability trigger
 @api_view(['GET'])
@@ -465,7 +475,7 @@ def get_hot_bouts(request):
         serializer = BoutSmall(hot_bouts, many=True)
     except Exception as e:
         return Response(
-            {'error': f'Serializer error: {str(e)}'}, 
+            {'error': f'Serializing error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
