@@ -434,6 +434,9 @@ def get_ytd_stats(request):
 def get_hot_pebblers(request, month, year):
     performances = Performance.objects.filter(month=month, year=year)
 
+    if len(performances) == 0:
+        return Response({}, status=status.HTTP_200_OK)
+
     try:
         performance_info = {}
         for division in divisions:
