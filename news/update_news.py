@@ -13,17 +13,16 @@ PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = True
+real_time = False
 y = 2025
-m = 7
-d = 25
+m = 9
+d = 1
 
 sys_prompts = {
     "Ari" : "You are Ari, a passionate octopus. In your response, you should employ an excited and optimistic tone for what is coming next.",
     "Patrick" : "You are Patrick, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
     "Lippo" : "You are Lippo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
 }
-
 
 reporters = Reporter.objects.all()
 

@@ -440,26 +440,20 @@ def get_hot_pebblers(request, month, year):
     try:
         performance_info = {}
         for division in divisions:
-            hot_perf= performances.filter(division=division).order_by(
+            hot_perf = performances.filter(division=division).order_by(
                 F('rank') - F('previous_rank'),
                 'rank'
             ).first()
 
-            # Implement as list for extensibility to top X hot pebblers
-            hot_pebbler = [hot_perf.pebbler]
-            serializer = PebblerPersonal(hot_pebbler, many=True)
-
-            # Using related name
-            home_bouts = hot_pebbler[0].home_bouts.filter(home_roll__isnull=False, month=month, year=year) 
-            away_bouts = hot_pebbler[0].away_bouts.filter(away_roll__isnull=False, month=month, year=year) 
-            all_bouts = (home_bouts | away_bouts)
-
-            if len(all_bouts) == 0:
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                last_bout = all_bouts.order_by('time').reverse().first()
-                pebble_gain = last_bout.away_score if last_bout.away == hot_pebbler[0] else last_bout.home_score
-                serializer.data[0]["description"] = f'''{hot_perf.pebbles - pebble_gain}->{hot_perf.pebbles} {hot_perf.previous_rank}->{hot_perf.rank}'''
+            recent_bouts = Bout.objects.filter(month=month, year=year, away_roll__isnull=False).filter(
+                Q(away=hot_perf.pebbler) | Q(home=hot_perf.pebbler)).order_by('time').reverse()
+            
+            if len(recent_bouts) > 0:
+                recent_bout = recent_bouts.first()
+                gain = recent_bout.away_score if recent_bout.away == hot_perf.pebbler else recent_bout.home_score
+                hot_pebbler = [hot_perf.pebbler]
+                serializer = PebblerPersonal(hot_pebbler, many=True)
+                serializer.data[0]["description"] = f"{hot_perf.pebbles - gain}UP{hot_perf.pebbles} {hot_perf.previous_rank}UP{hot_perf.rank}"
                 performance_info[division] = serializer.data
     except Exception as e:
         return Response(
