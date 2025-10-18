@@ -88,7 +88,7 @@ pebbler_list = [
     {'name': 'Osh', 'description': 'A cute sea otter who dreams of being a samurai. Grows along with those he meets.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Pity Pebble', 'ability': 'Will to Win'},
     {'name': 'Owen', 'description': 'A pig who finds pleasure in the simple things. Above all, likes to take in the sun on warm days.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Pity Pebble', 'ability': 'Lucky Seven'},
     {'name': 'Pabu', 'description': 'A ferocious ferret who is tough to track down. Is experienced around fire and rock.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Even Temper', 'ability': 'Miracle'},
-    {'name': 'Papa', 'description': 'Guardian to Baby. Somehow manages to cause more damage than his charge despite his seniority.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Will to Win'},
+    {'name': 'Papa', 'description': 'Guardian to Baby. Somehow manages to cause more damage than his charge despite having seniority.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Will to Win'},
     {'name': 'Pete', 'description': 'A spotted house plant with a strong bite. Sings catchy tunes and often dances while doing so.', 'isMale': True, 'trait': 'Power', 'quirk': 'Oddball', 'ability': 'Miracle'},
     {'name': 'Pigion', 'description': 'Member of the Yellow Fellows. While technically the leader of the band, he  prefers operating as a peer.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Untouchable', 'ability': 'Generosity'},
     {'name': 'Pinky', 'description': 'A flamboyantly colored dolphin in excellent shape. Once volunteered as a guest star in a production.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Even Temper', 'ability': 'Generosity'},
