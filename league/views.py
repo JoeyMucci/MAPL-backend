@@ -303,7 +303,7 @@ def get_recent_winners(request, end_month, end_year):
                 month = 12
                 year -= 1
 
-        month_name = calendar.month_name[month]
+        month_name = calendar.month_abbr[month]
         serializer.data[i]["description"] = divisions[i % 4] + f" {month_name} {year}"
 
     return Response(serializer.data, status=status.HTTP_200_OK)

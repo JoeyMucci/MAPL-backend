@@ -13,7 +13,7 @@ PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = False
+real_time = True
 y = 2025
 m = 9
 d = 1
@@ -189,7 +189,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                 "role": "user", 
                 "content": 
                     f'''
-                    The Mega Automated Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers". At any given time, there are 25 pebblers in each of four divisions, which are now listed from most prestigious to least prestigious: "Master", "All-Star", "Professional", "Learner". Competition occurs in cycles that run from the 1st to the 25th of each month. At the end of each cycle, the top 5 pebblers with the most pebbles in each division except Master are promoted (i.e. Professional to All-Star) and the bottom 5 pebblers with the fewest pebbles in each division except Learner are demoted (i.e. Professional to Learner). 
+                    The Mega Auto Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers". At any given time, there are 25 pebblers in each of four divisions, which are now listed from most prestigious to least prestigious: "Master", "All-Star", "Professional", "Learner". Competition occurs in cycles that run from the 1st to the 25th of each month. At the end of each cycle, the top 5 pebblers with the most pebbles in each division except Master are promoted (i.e. Professional to All-Star) and the bottom 5 pebblers with the fewest pebbles in each division except Learner are demoted (i.e. Professional to Learner). 
 
                     Each encounter between two pebblers is called a bout. Bouts follow this process:
                     1. Both pebblers roll according to their trait
