@@ -216,10 +216,11 @@ def play_bout(bout : Bout) -> None:
 
     bout.save()
 
-    # Rerank the division if this is the last bout of the day
+    # Rerank the division if this is the last bout of the day for the division
     if bout.last_in_day:
         rerank_division(bout.division, bout.year, bout.month)
         
+        # Prepare the next month if this is the last bout of the month
         if bout.day == sv.num_days and bout.division == sv.last_division:
             prepare_next_month(bout.year, bout.month)
         

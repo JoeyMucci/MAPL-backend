@@ -69,16 +69,49 @@ def get_article(request, id):
     
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+# Return the last 5 articles
+@api_view(['GET'])
+def get_hot_press(request):
+    reports = Report.objects.order_by('-year', '-month', '-day')[:5]
+
+    try:
+        serializer = SmallReportSerializer(reports, many=True)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializing error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(['GET'])
 def get_news_test(request, month, day, year):
-    bouts = Bout.objects.filter(month=month, day=day, year=year)
+    try:
+        serializer = get_news_test_handler(month, day, year)
+    except Exception as e:
+        return Response(
+            {'error': f'Error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
+    return Response({
+        "month": month, 
+        "day": day, 
+        "year": year, 
+        "bouts": serializer.data}, 
+        status=status.HTTP_200_OK
+    )
+
+def get_news_test_handler(month, day, year):
+    bouts = Bout.objects.filter(month=month, day=day, year=year)
     serializer = BoutFull(bouts, many=True)
 
     for bout in serializer.data:
         for side in ["away", "home"]:
-            form = bout[side]["performances"][0]["form"]
 
+            # Add ranking change
+            form = bout[side]["performances"][0]["form"]
             change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
 
             if change < 0:
@@ -90,6 +123,7 @@ def get_news_test(request, month, day, year):
 
             # TODO Implement more explicit labeling for the final day
 
+            # Convert form -> win/loss/unbeaten/winless streaks
             unbeaten = 0
             winless = 0
             win = 0
@@ -163,25 +197,4 @@ def get_news_test(request, month, day, year):
 
             del bout[side]["performances"][0]["form"]
 
-    return Response({
-        "month": month, 
-        "day": day, 
-        "year": year, 
-        "bouts": serializer.data}, 
-        status=status.HTTP_200_OK
-    )
-
-# Return the last 5 articles
-@api_view(['GET'])
-def get_hot_press(request):
-    reports = Report.objects.order_by('-year', '-month', '-day')[:5]
-
-    try:
-        serializer = SmallReportSerializer(reports, many=True)
-    except Exception as e:
-        return Response(
-            {'error': f'Serializing error: {str(e)}'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return serializer

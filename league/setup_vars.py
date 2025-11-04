@@ -51,7 +51,7 @@ pebbler_list = [
     {'name': 'Dave', 'description': 'Member of the Yellow Fellows. Honors the fallen pebbler of the same name.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Oddball', 'ability': 'Generosity'},
     {'name': 'Dominic Bluey', 'description': 'Lover to Ima Reddy. He is quite charismatic but sometimes prone to worrying.', 'isMale': True, 'trait': 'Power', 'quirk': 'Pity Pebble', 'ability': 'Miracle'},
     {'name': 'Doug', 'description': 'A dog with a clear set of principles that he follows. Ordinary but capable of extraordinary feats.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Proud Pebble', 'ability': 'Tip the Scales'},
-    {'name': 'Duke', 'description': 'A dog with a clear set of principles that he follows. Ordinary but capable of extraordinary feats.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Proud Pebble', 'ability': 'Generosity'},
+    {'name': 'Duke', 'description': 'A dog with a regal yet approachable demeanor. Is surprisingly skilled at ball sports.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Proud Pebble', 'ability': 'Generosity'},
     {'name': 'Duncan', 'description': 'An approachable pink blob. Can morph his body into different forms as needed.', 'isMale': True, 'trait': 'Power', 'quirk': 'Untouchable', 'ability': 'Generosity'},
     {'name': 'Edward', 'description': 'Lover to Cammy. Despite goofiness, possesses a remarkable sense of direction.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Oddball', 'ability': 'Will to Win'},
     {'name': 'Ethan', 'description': 'Brother to Logan. Over time, has built credibility through quality interpersonal skills.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Oddball', 'ability': 'Generosity'},
