@@ -79,7 +79,7 @@ class Performance(models.Model):
     pebbles = models.IntegerField(default=0)
 
     # Master, All-Star, Professional, Learner 
-    division = models.CharField(max_length=1)
+    division = models.CharField(max_length=12)
 
     year = models.IntegerField()
     month = models.IntegerField()
