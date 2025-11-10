@@ -53,7 +53,7 @@ def get_pebbler_info(pebblerName, PebblerSerializer):
 @api_view(['GET'])
 def get_bouts(request, month, day, year):
     bouts = Bout.objects.filter(month=month, day=day, year=year)
-    bouts_sorted = bouts.order_by('time').reverse()
+    bouts_sorted = bouts.order_by('time')
 
     bout_info = {}
 
