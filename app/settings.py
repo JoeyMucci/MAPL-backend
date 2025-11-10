@@ -22,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-$hq5mf&g_hn-w45&-_@l#i_3d5$h*yj4oacwn)g**7f7dwku$9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "mapl-66f6ec83dfb4.herokuapp.com"]
 
 # Rest framework definition
 REST_FRAMEWORK = {
