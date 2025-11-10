@@ -23,13 +23,20 @@ class PebblerFull(serializers.ModelSerializer):
     performances = serializers.SerializerMethodField()
 
     def get_performances(self, obj):
-        perf = obj.performances.order_by('-year', '-month').first()
-        if perf:
-            return [{
-                "form": perf.form,
-                "rank": perf.rank,
-                "previous_rank": perf.previous_rank,
-            }]
+        perfs = obj.performances.order_by('-year', '-month')
+        if perfs:
+            if len(perfs[0].form) > 0:
+                return [{
+                    "form": perfs[0].form,
+                    "rank": perfs[0].rank,
+                    "previous_rank": perfs[0].previous_rank,
+                }]
+            elif len(perfs) > 1 and len(perfs[1].form) > 0:
+                return [{
+                    "form": perfs[1].form,
+                    "rank": perfs[1].rank,
+                    "previous_rank": perfs[1].previous_rank,
+                }]
         return []
 
     class Meta:

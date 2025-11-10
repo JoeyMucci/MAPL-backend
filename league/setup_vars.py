@@ -8,15 +8,15 @@ pebblers_per_div = 25
 num_days = 25
 last_division = "Learner"
 
-start_year = 2023
+start_year = 2022
 start_month = 12
 
 # REAL_TIME determines whether or not to use to actual time, set to false and modify
 # CUR_YEAR, CUR_MONTH, and CUR_DAY to test the league running for certain amount of time
 real_time = True
 cur_year = 2025
-cur_month = 7
-cur_day = 13
+cur_month = 11
+cur_day = 25
 
 pebbler_list = [
     {'name': 'Ally', 'description': 'An imposing yet loving alligator. Lives lavishly and spoils those she cares for.', 'isMale': False, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Tip the Scales'},

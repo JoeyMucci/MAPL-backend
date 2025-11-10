@@ -5,6 +5,8 @@ from rest_framework import status
 import re
 from rest_framework.decorators import api_view
 
+divisions = ["Master", "All-Star", "Professional", "Learner"]
+
 def camelcase_to_words(s):
     words = re.sub('([a-z])([A-Z])', r'\1 \2', s)
     return words.title()
@@ -88,7 +90,8 @@ def get_hot_press(request):
 @api_view(['GET'])
 def get_news_test(request, month, day, year):
     try:
-        serializer = get_news_test_handler(month, day, year)
+        bouts = Bout.objects.filter(month=month, day=day, year=year, away_roll__isnull=False)
+        serializer = get_claude_data(bouts, day == 25)
     except Exception as e:
         return Response(
             {'error': f'Error: {str(e)}'}, 
@@ -103,25 +106,43 @@ def get_news_test(request, month, day, year):
         status=status.HTTP_200_OK
     )
 
-def get_news_test_handler(month, day, year):
-    bouts = Bout.objects.filter(month=month, day=day, year=year)
+def get_claude_data(bouts, final_day):
     serializer = BoutFull(bouts, many=True)
 
     for bout in serializer.data:
+        div = bout["division"]
         for side in ["away", "home"]:
 
             # Add ranking change
             form = bout[side]["performances"][0]["form"]
+
             change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
 
-            if change < 0:
-                bout[side]["performances"][0]["ranking_change"] = "Down " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
-            elif change > 0:
-                bout[side]["performances"][0]["ranking_change"] = "Up " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
-            else:
-                bout[side]["performances"][0]["ranking_change"] = "Rank stays the same"
+            bout[side]["updated_ranking"] = {}
 
-            # TODO Implement more explicit labeling for the final day
+            if change < 0:
+                bout[side]["updated_ranking"]["ranking_change"] = "Down " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            elif change > 0:
+                bout[side]["updated_ranking"]["ranking_change"] = "Up " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+            else:
+                bout[side]["updated_ranking"]["ranking_change"] = "Rank stays the same"
+
+            bout[side]["updated_ranking"]["updated_rank"] = bout[side]["performances"][0]["rank"]
+            bout[side]["updated_ranking"]["previous_rank"] = bout[side]["performances"][0]["previous_rank"]
+
+            # More explicit labeling for the final day
+            if final_day:
+                result = f"Stayed in {div}"
+
+                if bout[side]["performances"][0]["rank"] <= 5 and div != divisions[0]:
+                    idx = divisions.index(div)
+                    result = f"Promoted to {divisions[idx - 1]}"
+                elif bout[side]["performances"][0]["rank"] >= 21 and div != divisions[-1]:
+                    idx = divisions.index(div)
+                    result = f"Demoted to {divisions[idx + 1]}"
+
+                bout[side]["updated_division"] = result
+
 
             # Convert form -> win/loss/unbeaten/winless streaks
             unbeaten = 0
@@ -157,44 +178,45 @@ def get_news_test_handler(month, day, year):
                         winless += 1
                     loss_broke = True
                     win_broke = True
-                
-            bout[side]["performances"][0]["streaks"] = {
-                "unbeaten" : {
-                    "count": unbeaten + (0 if form[-1] == 'L' else 1),
-                    "type": "snapped" if form[-1] == 'L' else "extended",
-                },
-                "winless" : {
-                    "count": winless + (0 if form[-1] == 'W' else 1),
-                    "type": "snapped" if form[-1] == 'W' else "extended",
-                },
-                "win" : {
-                    "count": win + (1 if form[-1] == 'W' else 0),
-                    "type": "extended" if form[-1] == 'W' else "snapped",
-                },
-                "loss" : {
-                    "count": loss + (1 if form[-1] == 'L' else 0),
-                    "type": "extended" if form[-1] == 'L' else "snapped",
-                },
-            }
 
-            if (
-                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] < 5 or 
-                bout[side]["performances"][0]["streaks"]["unbeaten"]["count"] == bout[side]["performances"][0]["streaks"]["win"]["count"]
-            ):
-                del bout[side]["performances"][0]["streaks"]["unbeaten"]
+            if len(form) > 0:
+                bout[side]["updated_notable_streaks"] = {
+                    "unbeaten" : {
+                        "count": unbeaten + (0 if form[-1] == 'L' else 1),
+                        "type": "snapped" if form[-1] == 'L' else "extended",
+                    },
+                    "winless" : {
+                        "count": winless + (0 if form[-1] == 'W' else 1),
+                        "type": "snapped" if form[-1] == 'W' else "extended",
+                    },
+                    "win" : {
+                        "count": win + (1 if form[-1] == 'W' else 0),
+                        "type": "extended" if form[-1] == 'W' else "snapped",
+                    },
+                    "loss" : {
+                        "count": loss + (1 if form[-1] == 'L' else 0),
+                        "type": "extended" if form[-1] == 'L' else "snapped",
+                    },
+                }
 
-            if (
-                bout[side]["performances"][0]["streaks"]["winless"]["count"] < 5 or 
-                bout[side]["performances"][0]["streaks"]["winless"]["count"] == bout[side]["performances"][0]["streaks"]["loss"]["count"]
-            ):
-                del bout[side]["performances"][0]["streaks"]["winless"]
+                if (
+                    bout[side]["updated_notable_streaks"]["unbeaten"]["count"] < 5 or 
+                    bout[side]["updated_notable_streaks"]["unbeaten"]["count"] == bout[side]["updated_notable_streaks"]["win"]["count"]
+                ):
+                    del bout[side]["updated_notable_streaks"]["unbeaten"]
 
-            if bout[side]["performances"][0]["streaks"]["win"]["count"] < 3:
-                del bout[side]["performances"][0]["streaks"]["win"]
+                if (
+                    bout[side]["updated_notable_streaks"]["winless"]["count"] < 5 or 
+                    bout[side]["updated_notable_streaks"]["winless"]["count"] == bout[side]["updated_notable_streaks"]["loss"]["count"]
+                ):
+                    del bout[side]["updated_notable_streaks"]["winless"]
 
-            if bout[side]["performances"][0]["streaks"]["loss"]["count"] < 3:
-                del bout[side]["performances"][0]["streaks"]["loss"]
+                if bout[side]["updated_notable_streaks"]["win"]["count"] < 3:
+                    del bout[side]["updated_notable_streaks"]["win"]
 
-            del bout[side]["performances"][0]["form"]
+                if bout[side]["updated_notable_streaks"]["loss"]["count"] < 3:
+                    del bout[side]["updated_notable_streaks"]["loss"]
+
+            del bout[side]["performances"]
 
     return serializer
