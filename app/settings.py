@@ -59,6 +59,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'app.urls'
+STATIC_ROOT = 'tmp'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
