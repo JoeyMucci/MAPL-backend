@@ -53,12 +53,13 @@ def get_pebbler_info(pebblerName, PebblerSerializer):
 @api_view(['GET'])
 def get_bouts(request, month, day, year):
     bouts = Bout.objects.filter(month=month, day=day, year=year)
+    bouts_sorted = bouts.order_by('time').reverse()
 
     bout_info = {}
 
     try:
         for division in divisions:
-            division_bouts = bouts.filter(division=division)
+            division_bouts = bouts_sorted.filter(division=division)
             serializer = BoutSmall(division_bouts, many=True)
             serialized_bouts = serializer.data
             bout_info[division] = serialized_bouts
