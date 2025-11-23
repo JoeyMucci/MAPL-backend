@@ -65,6 +65,7 @@ STATIC_ROOT = 'tmp'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    'https://mega-auto-pebble-league.netlify.app',
 ]
 
 CORS_ALLOW_HEADERS = ['*']
@@ -90,6 +91,13 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": "db.sqlite3",
+#     }
+# }
 
 DATABASES = {
     "default": dj_database_url.config(

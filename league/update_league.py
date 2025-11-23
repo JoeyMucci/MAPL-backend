@@ -32,7 +32,7 @@ def update_league() -> None:
     bouts_to_play = Bout.objects.filter(
         time__lt=cur_time,
         away_roll__isnull=True,
-    ) 
+    ).order_by('time')
 
     for bout in bouts_to_play:
         play_bout(bout)
