@@ -216,13 +216,29 @@ def play_bout(bout : Bout) -> None:
 
     bout.save()
 
-    # Rerank the division if this is the last bout of the day for the division
     if bout.last_in_day:
-        rerank_division(bout.division, bout.year, bout.month)
-        
+        rerank_divisions(bout.year, bout.month)
+
         # Prepare the next month if this is the last bout of the month
-        if bout.day == sv.num_days and bout.division == sv.last_division:
+        if bout.day == sv.num_days:
             prepare_next_month(bout.year, bout.month)
+
+def get_next_day(year: int, month: int, day: int) -> tuple[int, int, int]:
+    new_day = day + 1
+    new_month = month
+    new_year = year
+    if new_day > sv.num_days:
+        new_day = 1
+        new_month += 1
+        if new_month > 12:
+            new_month = 1
+            new_year += 1
+    return new_year, new_month, new_day
+
+
+def rerank_divisions(year: int, month: int) -> None:
+    for division in sv.divisions:
+        rerank_division(division, year, month)
         
 def rerank_division(division: str, year: int, month: int) -> None:
     performance_list = Performance.objects.filter(
@@ -245,7 +261,7 @@ def rerank_division(division: str, year: int, month: int) -> None:
 def prepare_next_month(year: int, month: int) -> None:
     next_year = year + 1 if month == 12 else year
     next_month = 1 if month == 12 else month + 1
-
+    
     schedule = sv.generate_schedule()
 
     r.shuffle(schedule)
@@ -279,7 +295,7 @@ def prepare_next_month(year: int, month: int) -> None:
         new_divisions["Learner"][i], new_divisions["Professional"][20 + i] = new_divisions["Professional"][20 + i], new_divisions["Learner"][i]
 
     # Update the tables for each division  
-    start_hour = 12
+    start_minutes = 0
     for division in ["Master", "All-Star", "Professional", "Learner"]:
         tiebreakers = [i for i in range(1, 26)]
 
@@ -325,7 +341,7 @@ def prepare_next_month(year: int, month: int) -> None:
         # 4) Create new bouts for the next month
         for i in range(len(schedule)):
             cur_day = i + 1
-            time_ticker = datetime(next_year, next_month, cur_day, start_hour, 0, 0, tzinfo=dt_timezone.utc)
+            time_ticker = datetime(next_year, next_month, cur_day, 12, start_minutes, 0, tzinfo=dt_timezone.utc)
             for j in range(len(schedule[i]["bouts"])):
                 Bout.objects.create(
                     away=new_divisions[division][schedule[i]['bouts'][j]['away'] - 1],
@@ -335,13 +351,13 @@ def prepare_next_month(year: int, month: int) -> None:
                     year=next_year,
                     month=next_month,
                     day=cur_day,
-                    last_in_day=(j == len(schedule[i]["bouts"]) - 1),
+                    last_in_day=(j == len(schedule[i]["bouts"]) - 1 and division == sv.last_division),
                 )
-                time_ticker += timezone.timedelta(minutes=10)
+                time_ticker += timezone.timedelta(minutes=40)
 
         # Matches occur every 10 minutes, and there are 12 matches so we can 
         # increment the hour by 120/2=60 for the next division
-        start_hour += 2 
+        start_minutes += 10
 
     update_league() # Try and play the bouts that were just created
 

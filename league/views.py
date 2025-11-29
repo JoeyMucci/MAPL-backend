@@ -10,12 +10,40 @@ import calendar
 
 
 BOUTS_PER_SEASON = 24
+DAYS_PER_MONTH = 25
 divisions = ["Master", "All-Star", "Professional", "Learner"]
 
 def camelcase_to_words(s):
     words = re.sub('([a-z])([A-Z])', r'\1 \2', s)
     return words.title()
 
+def get_last_complete_date():
+    last_bout = Bout.objects.filter(away_roll__isnull=False).order_by('time').reverse()[0]
+    day = last_bout.day
+    month = last_bout.month
+    year = last_bout.year
+
+    if not last_bout.last_in_day:
+        day -= 1
+        if day == 0:
+            month -= 1
+            day = DAYS_PER_MONTH
+            if month == 0:
+                month = 12
+                year -= 1
+
+    return year, month, day
+
+def get_last_complete_month():
+    year, month, day = get_last_complete_date()
+
+    if day != DAYS_PER_MONTH:
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+    
+    return year, month
 
 # Return the pebbler's basic information
 @api_view(['GET'])
@@ -267,23 +295,25 @@ def get_pebbler_aggregate(request, pebblerName):
 
 # Return recent winners for the past four months
 @api_view(['GET'])
-def get_recent_winners(request, end_month, end_year):
+def get_recent_winners(request):
+    year, month = get_last_complete_month()
+
     count = 4
     recent_winning_performances = Performance.objects.filter(
         rank=1,
-        year=end_year,
-        month__gte=end_month - (count - 1), 
-        month__lte=end_month
+        year=year,
+        month__gte=month - (count - 1), 
+        month__lte=month
     ) | Performance.objects.filter(
         rank=1,
-        year=end_year - 1,
-        month__gte=end_month - (count - 1) + 12, 
+        year=year - 1,
+        month__gte=month - (count - 1) + 12, 
     )
 
     pebblers = [-1 for _ in range(len(recent_winning_performances))]
 
     for perf in recent_winning_performances:
-        months_old = (end_year - perf.year) * 12 + (end_month - perf.month)
+        months_old = (year - perf.year) * 12 + (month - perf.month)
         idx = months_old * len(divisions) + divisions.index(perf.division)
         pebblers[idx] = perf.pebbler
 
@@ -295,8 +325,8 @@ def get_recent_winners(request, end_month, end_year):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    month = end_month 
-    year = end_year
+    month = month 
+    year = year
     for i in range(len(serializer.data)):
         if i > 0 and i % 4 == 0:
             month -= 1
@@ -432,12 +462,13 @@ def get_ytd_stats(request):
 # Return the pebbler with the greatest ranking change in each division
 # Tiebreaker is higher rank (i.e. 15->10 would take precedence over 20->15)
 @api_view(['GET'])
-def get_hot_pebblers(request, month, year):
+def get_hot_pebblers(request):
+    year, month, day = get_last_complete_date()
     performances = Performance.objects.filter(month=month, year=year)
-
+    
     if len(performances) == 0:
         return Response({}, status=status.HTTP_200_OK)
-
+    
     try:
         performance_info = {}
         for division in divisions:
@@ -446,12 +477,12 @@ def get_hot_pebblers(request, month, year):
                 'rank'
             ).first()
 
-            recent_bouts = Bout.objects.filter(month=month, year=year, away_roll__isnull=False).filter(
-                Q(away=hot_perf.pebbler) | Q(home=hot_perf.pebbler)).order_by('time').reverse()
+            hot_bouts = Bout.objects.filter(month=month, year=year, day=day).filter(
+                Q(away=hot_perf.pebbler) | Q(home=hot_perf.pebbler))
             
-            if len(recent_bouts) > 0:
-                recent_bout = recent_bouts.first()
-                gain = recent_bout.away_score if recent_bout.away == hot_perf.pebbler else recent_bout.home_score
+            if len(hot_bouts) == 1:
+                hot_bout = hot_bouts[0]
+                gain = hot_bout.away_score if hot_bout.away == hot_perf.pebbler else hot_bout.home_score
                 hot_pebbler = [hot_perf.pebbler]
                 serializer = PebblerPersonal(hot_pebbler, many=True)
                 serializer.data[0]["description"] = f"{hot_perf.pebbles - gain}UP{hot_perf.pebbles} {hot_perf.previous_rank}UP{hot_perf.rank}"
@@ -467,7 +498,7 @@ def get_hot_pebblers(request, month, year):
 # Return the five most recent bouts with an ability trigger
 @api_view(['GET'])
 def get_hot_bouts(request):
-    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True)).order_by('time').reverse()[:5]
+    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True) | (Q(away_quirk=True) & Q(home_quirk=True))).order_by('time').reverse()[:5]
 
     try:
         serializer = BoutSmall(hot_bouts, many=True)

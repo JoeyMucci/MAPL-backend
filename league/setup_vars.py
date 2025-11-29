@@ -6,9 +6,10 @@ __all__ = [
 
 pebblers_per_div = 25
 num_days = 25
+divisions = ["Master", "All-Star", "Professional", "Learner"]
 last_division = "Learner"
 
-start_year = 2022
+start_year = 2023
 start_month = 12
 
 # REAL_TIME determines whether or not to use to actual time, set to false and modify
