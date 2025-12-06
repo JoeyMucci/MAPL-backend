@@ -493,7 +493,16 @@ def get_hot_pebblers(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    return Response(performance_info, status=status.HTTP_200_OK)
+    date = {}
+    date["year"] = year
+    date["month"] = month
+    date["day"] = day
+    
+    full_data = {}
+    full_data["performance_info"] = performance_info
+    full_data["date"] = date
+    
+    return Response(full_data, status=status.HTTP_200_OK)
 
 # Return the five most recent bouts with an ability trigger
 @api_view(['GET'])
