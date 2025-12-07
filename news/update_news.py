@@ -10,17 +10,18 @@ from django.utils import timezone
 import datetime
 import os
 
+RANKINGS_THRESHOLD = 4
 PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
 real_time = True
 y = 2025
-m = 11
-d = 25
+m = 12
+d = 8
 
 sys_prompts = {
-    "Ari" : "You are Ari, a passionate octopus. In your response, you should employ an excited and optimistic tone for what is coming next.",
+    "Ari" : "You are Ari, a passionate octopus. In your response, you should employ an optimistic tone for what is coming next.",
     "Patrick" : "You are Patrick, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
     "Lippo" : "You are Lippo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
 }
@@ -76,19 +77,75 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
     elif day_of_week == "Saturday" or day_of_week == "Sunday":
         author = "Lippo"
 
-    final_instruction = ""
+    reporting_conditions = [
+        "-  At least one pebbler triggered their ability",
+        "-  Each pebbler is named in the other's description",
+        "-  Both pebblers are members of the same group (you can tell from description)",
+    ]
 
-    if d >= PROMOTE_DEMOTE_THRESHOLD:
-        final_instruction = "7. Mention each pebbler's standing with regards to promotion/demotion"
-    
+    writing_points = [
+        "-  Mention the initial rolls",
+        "-  Mention any quirk activations",
+        "-  Mention any ability triggers, including what the outcome of the ability was, in the order they occurred",
+        "-  Mention how many pebbles each pebbler earned independently",
+        "-  Mention any streaks that each pebbler extended or snapped",
+    ]
+
+    if d >= RANKINGS_THRESHOLD:
+        reporting_conditions.append("-  Both pebblers in the bout were in ranks 1-5 before the bout (previous_rank)")
+        reporting_conditions.append("-  Both pebblers in the bout were in ranks 21-25 before the bout (previous_rank)")
+        writing_points.append("-  Mention how each pebbler's ranking changed")
+
     if d == FINAL_DAY:
-        final_instruction = "7. Mention whether each pebbler got promoted, demoted, or stayed in the same division"
+        writing_points.append("-  Mention whether each pebbler got promoted, demoted, or stayed in the same division")
+    elif d >= PROMOTE_DEMOTE_THRESHOLD:
+        writing_points.append("-  Mention each pebbler's standing with regards to promotion/demotion")
+
+    reporting_conditions.append("-  If there are less than 3 bouts that meet the conditions, pick random bouts to reach at least 3")
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
     client = anthropic.Anthropic(
         api_key=api_key
     )
+
+    msg = f'''
+The Mega Auto Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers". At any given time, there are 25 pebblers in each of four divisions, which are now listed from most prestigious to least prestigious: "Master", "All-Star", "Professional", "Learner". Competition occurs in cycles that run from the 1st to the 25th of each month. At the end of each cycle, the top 5 pebblers with the most pebbles in each division except Master are promoted (i.e. Professional to All-Star) and the bottom 5 pebblers with the fewest pebbles in each division except Learner are demoted (i.e. Professional to Learner). 
+
+Each encounter between two pebblers is called a bout. Bouts follow this process:
+-  Both pebblers roll according to their trait
+-  Quirks may activate and grant pebblers instant pebbles to add to their total
+-  The away pebbler may trigger their ability causing the rolls to change
+-  Halftime
+-  The home pebbler may trigger their ability causing the rolls to change
+-  Pebbles are awarded based on the final rolls
+
+Here is a list of what the abilities do:
+Miracle: If trailing opponent, upgrade roll to opponent's roll
+Lucky Seven: If leading opponent, upgrade roll to 7
+Generosity: If tied with opponent, double tie bonus
+Will to Win: If tied with opponent, reroll and double win bonus
+Tip the Scales: If trailing by one, switch rolls with opponent
+
+Here is the data containing the league results for today:
+
+{league_results}
+
+Your task is to create a report meant to be read in print. As such, only include words in the voice of {author}.
+
+Report on a bout if and only if it meets at least one of the following conditions:
+{'\n'.join(reporting_conditions)}
+
+Report on bouts in this format:
+{'\n'.join(writing_points)}
+
+Your response should be in this format:
+-  Brief introductory paragraph
+-  Paragraph for each bout
+-  Brief conclusion paragraph
+
+Before submitting, filter out your response for any content that is not part of the report. 
+'''
     
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -101,53 +158,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
         messages=[
             {
                 "role": "user", 
-                "content": 
-                    f'''
-                    The Mega Auto Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers". At any given time, there are 25 pebblers in each of four divisions, which are now listed from most prestigious to least prestigious: "Master", "All-Star", "Professional", "Learner". Competition occurs in cycles that run from the 1st to the 25th of each month. At the end of each cycle, the top 5 pebblers with the most pebbles in each division except Master are promoted (i.e. Professional to All-Star) and the bottom 5 pebblers with the fewest pebbles in each division except Learner are demoted (i.e. Professional to Learner). 
-
-                    Each encounter between two pebblers is called a bout. Bouts follow this process:
-                    1. Both pebblers roll according to their trait
-                    2. Quirks may activate and grant pebblers instant pebbles to add to their total
-                    3. The away pebbler may trigger their ability causing the rolls to change
-                    4. Halftime
-                    5. The home pebbler may trigger their ability causing the rolls to change
-                    6. Pebbles are awarded based on the final rolls
-
-                    Here is a list of what the abilities do:
-                    Miracle: If trailing opponent, upgrade roll to opponent's roll
-                    Lucky Seven: If leading opponent, upgrade roll to 7
-                    Generosity: If tied with opponent, double tie bonus
-                    Will to Win: If tied with opponent, reroll and double win bonus
-                    Tip the Scales: If trailing by one, switch rolls with opponent
-
-                    Here is the data containing the league results for today.
-
-                    {league_results}
-
-                    Your task is to create a report meant to be read in print. As such, only include words in the voice of {author}.
-
-                    Report on a bout if and only if it meets at least one of the following conditions:
-                    1. At least one pebbler triggered their ability
-                    2. Each pebbler is named in the other's description
-                    3. Both pebblers are members of the same group (tell from description)
-                    3. Both pebblers in the bout were in ranks 1-5 before the bout (previous_rank)
-                    4. Both pebblers in the bout are in ranks 21-25 before the bout (previous_rank)
-                    5. If there are less than 3 bouts that meet the conditions, pick random bouts to reach at least 3.
-
-                    Report on bouts in this format:
-                    1. Mention the initial rolls
-                    2. Mention any quirk activations
-                    3. Mention any ability triggers, including what the outcome of the ability was, in the order they occurred
-                    4. Mention how many pebbles each pebbler earned independently
-                    5. Mention any streaks that each pebbler extended or snapped.
-                    6. Mention how each pebbler's ranking changed.
-                    {final_instruction}
-
-                    Your response should be in this format:
-                    1. Brief introductory paragraph
-                    2. Paragraph for each bout
-                    3. Brief conclusion paragraph 
-                    '''
+                "content": msg
             }
         ],
     )
@@ -167,10 +178,12 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
                     messages=[
                         {"role": "user", "content":
                             f"""
-                            Create a creative 10-20 word title for the following article.
+Create a creative 10-20 word title for the following article:
 
-                            {essay}
-                            """
+{essay}
+
+Before submitting, filter out your response for any content that is not part of the title. 
+"""
                          }
                     ],
                 )
