@@ -35,7 +35,7 @@ def get_author(request, authorName):
     return Response(serialized_author, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-def get_news(request, month, year):
+def get_news_by_month(request, month, year):
     reports = Report.objects.filter(month=month, year=year).order_by("-day")
     data = {
         "Merged": [],
@@ -56,6 +56,25 @@ def get_news(request, month, year):
         )
     
     return Response(data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_news_by_day(request, month, year, day):
+    reports = Report.objects.filter(month=month, year=year, day=day)
+    if len(reports) != 1:
+        return Response(
+            {'error': 'Report not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        for report in reports:
+            serializer = SmallReportSerializer(report)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializing error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @api_view(['GET'])
 def get_article(request, id):
