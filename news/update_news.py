@@ -9,6 +9,7 @@ from news.views import get_claude_data
 from django.utils import timezone
 import datetime
 import os
+import re
 
 RANKINGS_THRESHOLD = 4
 PROMOTE_DEMOTE_THRESHOLD = 13
@@ -170,6 +171,7 @@ Before submitting, filter out your response for any content that is not part of 
         for block in response.content:
             if block.type == "text":
                 essay = block.text
+                essay = re.sub(r"\*\*.*?\*\*", "", essay, flags=re.S)
 
                 response = anthropic.Anthropic().messages.create(
                     model="claude-sonnet-4-20250514",
@@ -192,6 +194,8 @@ Before submitting, filter out your response for any content that is not part of 
                     for block in response.content:
                         if block.type == "text":
                             title = block.text
+                            if title[:2] == "**" and title[-2:] == "**":
+                                title = title[2:-2]
                             Report.objects.create(
                                 author = Reporter.objects.get(name=author),
                                 year = y,
