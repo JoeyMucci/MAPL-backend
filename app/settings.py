@@ -67,6 +67,7 @@ STATIC_ROOT = 'tmp'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'https://mega-auto-pebble-league.netlify.app',
+    'https://pebble-kingdom.com',
 ]
 
 CORS_ALLOW_HEADERS = ['*']
