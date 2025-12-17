@@ -172,6 +172,7 @@ Before submitting, filter out your response for any content that is not part of 
             if block.type == "text":
                 essay = block.text
                 essay = re.sub(r"\*\*.*?\*\*", "", essay, flags=re.S)
+                essay = essay.strip()
 
                 response = anthropic.Anthropic().messages.create(
                     model="claude-sonnet-4-20250514",
