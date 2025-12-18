@@ -195,8 +195,12 @@ Before submitting, filter out your response for any content that is not part of 
                     for block in response.content:
                         if block.type == "text":
                             title = block.text
+                            if title[0] == "\"" and title[-1] == "\"":
+                                title = title[1:-1]
                             if title[:2] == "**" and title[-2:] == "**":
                                 title = title[2:-2]
+                            if title[0] == "\"" and title[-1] == "\"":
+                                title = title[1:-1]
                             Report.objects.create(
                                 author = Reporter.objects.get(name=author),
                                 year = y,
