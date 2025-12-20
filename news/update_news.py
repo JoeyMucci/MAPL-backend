@@ -79,6 +79,7 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
         author = "Lippo"
 
     reporting_conditions = [
+        "-  Both pebblers activate their quirk"
         "-  At least one pebbler triggered their ability",
         "-  Each pebbler is named in the other's description",
         "-  Both pebblers are members of the same group (you can tell from description)",
