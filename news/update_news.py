@@ -122,12 +122,37 @@ Each encounter between two pebblers is called a bout. Bouts follow this process:
 -  The home pebbler may trigger their ability causing the rolls to change
 -  Pebbles are awarded based on the final rolls
 
-Here is a list of what the abilities do:
-Miracle: If trailing opponent, upgrade roll to opponent's roll
-Lucky Seven: If leading opponent, upgrade roll to 7
-Generosity: If tied with opponent, double tie bonus
-Will to Win: If tied with opponent, reroll and double win bonus
-Tip the Scales: If trailing by one, switch rolls with opponent
+Below is useful context for reporting on the bouts, it will help you understand the JSON data better. 
+
+    Quirks always activate if the condition is met. Quirks grant 2 pebbles within the Master or All-Star division and 1 pebble within the Professional or Learner division. Remember quirks can only activate immediately after the initial rolls. 
+    Here is the list of conditions for quirk activations:
+    Pity Pebble: Trailing by two or more
+    Proud Pebble: Leading by two or more
+    Oddball: Roll parity differs from day parity and opponent roll parity
+    Even Temper: Roll parity matches day parity and opponent roll parity
+    Untouchable: Opponent roll is one
+
+    Abilities may or may not trigger if the condition is met. Abilities are powerful and affect bouts dramatically. 
+    Here is the list conditions for ability triggers:
+    Miracle: Trailing opponent
+    Lucky Seven: Leading opponent
+    Generosity: Tying opponent
+    Will to Win: Tying oppponent
+    Tip the Scales: Trailing by exactly 1
+
+    And here is what the abilities do:
+    Miracle: Upgrade roll to opponent's roll
+    Lucky Seven: Upgrade roll to 7
+    Generosity: Double tie bonus
+    Will to Win: Reroll and double win bonus
+    Tip the Scales: Switch rolls with opponent
+
+    The formula for calculating base pebbles is broken down by result:
+      Higher roll: <roll difference> + 3; 3 is the "win bonus"
+      Lower roll: 0
+      Same roll: 2; 2 is the "tie bonus"
+
+    The formula for calculating final pebbles is <quirk pebbles> + 3 * <base pebbles>
 
 Here is the data containing the league results for today:
 
