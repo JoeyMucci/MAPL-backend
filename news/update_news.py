@@ -11,20 +11,26 @@ import datetime
 import os
 import re
 
-RANKINGS_THRESHOLD = 4
+RANKINGS_THRESHOLD = 3
 PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = True
-y = 2025
-m = 12
-d = 8
+real_time = False
+y = 2026
+m = 2
+d = 25
+
+if real_time:
+    cur_time = timezone.now()
+    y = cur_time.year
+    m = cur_time.month
+    d = cur_time.day
 
 sys_prompts = {
     "Ari" : "You are Ari, a passionate octopus. In your response, you should employ an optimistic tone for what is coming next.",
     "Patrick" : "You are Patrick, a scholarly bear. In your response, you should use flowery language as you analyze the bouts.",
-    "Lippo" : "You are Lippo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings and long streaks.",
+    "Lippo" : "You are Lippo, a boisterous parrot. In your response, you should employ an absurd tone and repeat things for emphasis, such as high pebble earnings.",
 }
 
 reporters = Reporter.objects.all()
@@ -50,24 +56,17 @@ if len(reporters) == 0:
     
     Reporter.objects.bulk_create([lippo, ari, patrick])
 
-
-if real_time:
-    cur_time = timezone.now()
-    y = cur_time.year
-    m = cur_time.month
-    d = cur_time.day
-
 reports = Report.objects.all().filter(year=y, month=m, day=d)
 bouts = Bout.objects.filter(month=m, day=d, year=y, away_roll__isnull=False)
 
 if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
-    serializer = get_claude_data(bouts, d == 25)
+    bouts_to_report = get_claude_data(bouts, d)
 
     league_results = {
         "month": m, 
         "day": d, 
         "year": y, 
-        "bouts": serializer.data
+        "bouts": bouts_to_report
     }
 
     author = "Ari"
@@ -78,24 +77,17 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
     elif day_of_week == "Saturday" or day_of_week == "Sunday":
         author = "Lippo"
 
-    reporting_conditions = [
-        "-  Both pebblers activate their quirk"
-        "-  At least one pebbler triggered their ability",
-        "-  At least one pebbler is named in the other's description",
-        "-  Both pebblers are members of the same group (you can tell from description)",
-    ]
-
     writing_points = [
+        "-  Mention the division of the bout"
+        "-  Mention the pebblers competing, noting any notable circumstances"
         "-  Mention the initial rolls",
         "-  Mention any quirk activations",
         "-  Mention any ability triggers, including what the outcome of the ability was, in the order they occurred",
         "-  Mention how many pebbles each pebbler earned independently",
-        "-  Mention any streaks that each pebbler extended or snapped",
     ]
 
     if d >= RANKINGS_THRESHOLD:
-        reporting_conditions.append("-  Both pebblers in the bout were in ranks 1-5 before the bout (previous_rank)")
-        reporting_conditions.append("-  Both pebblers in the bout were in ranks 21-25 before the bout (previous_rank)")
+        writing_points.append("-  Mention any streaks that each pebbler extended or snapped")
         writing_points.append("-  Mention how each pebbler's ranking changed")
 
     if d == FINAL_DAY:
@@ -103,16 +95,29 @@ if len(reports) == 0 and len(bouts) == BOUTS_IN_DAY:
     elif d >= PROMOTE_DEMOTE_THRESHOLD:
         writing_points.append("-  Mention each pebbler's standing with regards to promotion/demotion")
 
-    reporting_conditions.append("-  If there are less than 3 bouts that meet the conditions, pick random bouts to reach at least 3")
-
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
     client = anthropic.Anthropic(
         api_key=api_key
     )
 
+    date_str = datetime.date(y, m, d).strftime('%B %d, %Y').replace(' 0', ' ')
     msg = f'''
-The Mega Auto Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers". At any given time, there are 25 pebblers in each of four divisions, which are now listed from most prestigious to least prestigious: "Master", "All-Star", "Professional", "Learner". Competition occurs in cycles that run from the 1st to the 25th of each month. At the end of each cycle, the top 5 pebblers with the most pebbles in each division except Master are promoted (i.e. Professional to All-Star) and the bottom 5 pebblers with the fewest pebbles in each division except Learner are demoted (i.e. Professional to Learner). 
+The Mega Auto Pebble League (MAPL) is a perpetual competition between 100 competitors referred to as "pebblers".
+
+At any given time, there are 25 pebblers in each of 4 divisions.
+The 4 divisions listed from highest to lowest are:
+    Master 
+    All-Star 
+    Professional 
+    Learner
+    
+Competition occurs in cycles that run from the 1st to the 25th of each month. 
+During the competition cycle, pebblers compete against one another to accumulate pebbles.
+Pebblers are ranked on the number of pebbles they accumulate.
+At the end of the cycle, the top 5 pebblers are promoted to the next higher division and the bottom 5 pebblers are demoted to the next lower division.
+*Note that in the Master division, promotion is impossible because there is no division higher than Master.
+*Note that in the Learner division, demotion is impossible because there is no division lower than Learner.
 
 Each encounter between two pebblers is called a bout. Bouts follow this process:
 -  Both pebblers roll according to their trait
@@ -122,54 +127,51 @@ Each encounter between two pebblers is called a bout. Bouts follow this process:
 -  The home pebbler may trigger their ability causing the rolls to change
 -  Pebbles are awarded based on the final rolls
 
-Below is useful context for reporting on the bouts, it will help you understand the JSON data better. 
-
-    Quirks always activate if the condition is met. Quirks grant 2 pebbles within the Master or All-Star division and 1 pebble within the Professional or Learner division. Remember quirks can only activate immediately after the initial rolls. 
-    Here is the list of conditions for quirk activations:
-    Pity Pebble: Trailing by two or more
-    Proud Pebble: Leading by two or more
-    Oddball: Roll parity differs from day parity and opponent roll parity
-    Even Temper: Roll parity matches day parity and opponent roll parity
-    Untouchable: Opponent roll is one
-
-    Abilities may or may not trigger if the condition is met. Abilities are powerful and affect bouts dramatically. 
-    Here is the list conditions for ability triggers:
-    Miracle: Trailing opponent
-    Lucky Seven: Leading opponent
-    Generosity: Tying opponent
-    Will to Win: Tying oppponent
-    Tip the Scales: Trailing by exactly 1
-
-    And here is what the abilities do:
-    Miracle: Upgrade roll to opponent's roll
-    Lucky Seven: Upgrade roll to 7
-    Generosity: Double tie bonus
-    Will to Win: Reroll and double win bonus
-    Tip the Scales: Switch rolls with opponent
+Below is useful context for reporting on the bouts: 
 
     The formula for calculating base pebbles is broken down by result:
-      Higher roll: <roll difference> + 3; 3 is the "win bonus"
-      Lower roll: 0
-      Same roll: 2; 2 is the "tie bonus"
+        Higher roll: <roll difference> + 3; 3 is the "win bonus"
+        Lower roll: 0
+        Same roll: 2; 2 is the "tie bonus"
+        *Note that a pebbler can increase the value of their "win bonus" or "tie bonus" without affecting its value for the other pebbler. 
+
+    Traits dictate initial rolls:
+        Grace: 1, 2, 4, 4, 5, 5
+        Skill: 1, 3, 3, 4, 4, 6
+        Power: 1, 1, 2, 5, 5, 6
+        Speed: 1, 1, 3, 3, 6, 6
+
+    Quirks grant 1-2 instant pebbles after the initial rolls if the appropriate condition is met:
+        Pity Pebble: Trailing by two or more
+        Proud Pebble: Leading by two or more
+        Oddball: Roll parity differs from day parity and opponent roll parity
+        Even Temper: Roll parity matches day parity and opponent roll parity
+        Untouchable: Opponent roll is one
+
+    Abilities may trigger when a condition is met to dramatically change bouts:
+        Miracle: Trailing opponent -> Upgrade your roll to opponent's roll
+        Lucky Seven: Leading opponent -> Upgrade your roll to 7
+        Generosity: Tying opponent -> Double your tie bonus
+        Will to Win: Tying opponent -> Reroll and double your win bonus
+        Tip the Scales: Trailing by exactly 1 -> Switch your roll with opponent's roll
 
     The formula for calculating final pebbles is <quirk pebbles> + 3 * <base pebbles>
 
-Here is the data containing the league results for today:
+Here is the data containing notable bout results for {date_str}:
 
 {league_results}
 
 Your task is to create a report meant to be read in print. As such, only include words in the voice of {author}.
 
-Report on a bout if and only if it meets at least one of the following conditions:
-{'\n'.join(reporting_conditions)}
-
-Report on bouts in this format:
+Report on bouts according to the following format:
 {'\n'.join(writing_points)}
 
 Your response should be in this format:
 -  Brief introductory paragraph
 -  Paragraph for each bout
 -  Brief conclusion paragraph
+
+Be sure to mention every bout.
 
 Before submitting, filter out your response for any content that is not part of the report. 
 '''
@@ -197,7 +199,7 @@ Before submitting, filter out your response for any content that is not part of 
         for block in response.content:
             if block.type == "text":
                 essay = block.text
-                essay = re.sub(r"\*\*.*?\*\*", "", essay, flags=re.S)
+                essay = re.sub(r"(?m)^\s*\*\*.+?\*\*\s*:?\s*", "", essay)
                 essay = essay.strip()
 
                 response = anthropic.Anthropic().messages.create(

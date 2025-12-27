@@ -57,4 +57,4 @@ class BoutFull(serializers.ModelSerializer):
 
     class Meta:
         model = Bout
-        exclude = ['id', 'time', 'last_in_day']
+        exclude = ['id', 'last_in_day']

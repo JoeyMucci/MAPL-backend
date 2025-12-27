@@ -1,11 +1,25 @@
 from news.models import *
 from news.serializers import *
+import random as r
 from rest_framework.response import Response
 from rest_framework import status
 import re
 from rest_framework.decorators import api_view
 
 divisions = ["Master", "All-Star", "Professional", "Learner"]
+RANKINGS_THRESHOLD = 3
+PROMOTE_DEMOTE_THRESHOLD = 13
+FINAL_DAY = 25
+BOUTS_PER_DIV = 12
+MAX_BOUTS = 8
+
+abilityActionMap = {
+    "Miracle": "upgrades roll to opponent's roll",
+    "Lucky Seven": "upgrades roll to 7",
+    "Generosity": "doubles tie bonus",
+    "Will to Win": "rerolls and doubles win bonus",
+    "Tip the Scales": "switches roll with opponent",
+}
 
 def camelcase_to_words(s):
     words = re.sub('([a-z])([A-Z])', r'\1 \2', s)
@@ -110,7 +124,7 @@ def get_hot_press(request):
 def get_news_test(request, month, day, year):
     try:
         bouts = Bout.objects.filter(month=month, day=day, year=year, away_roll__isnull=False)
-        serializer = get_claude_data(bouts, day == 25)
+        data = get_claude_data(bouts, day)
     except Exception as e:
         return Response(
             {'error': f'Error: {str(e)}'}, 
@@ -121,36 +135,224 @@ def get_news_test(request, month, day, year):
         "month": month, 
         "day": day, 
         "year": year, 
-        "bouts": serializer.data}, 
+        "bouts": data}, 
         status=status.HTTP_200_OK
     )
 
-def get_claude_data(bouts, final_day):
+def get_claude_data(bouts, day):
+    auto = []
+    notable = []
     serializer = BoutFull(bouts, many=True)
+    bts = serializer.data
+    r.shuffle(bts)
+    auto_bout = { division : None for division in divisions}
+    notable_bout = {division : None for division in divisions}
+    div_mp = {division : 0 for division in divisions}
 
-    for bout in serializer.data:
+    for bout in bts:
+        rel = False
+        ranking_bookend = False
         div = bout["division"]
-        for side in ["away", "home"]:
+        data = {}
+        data["division"] = div
+        data["time"] = bout["time"]
+        data["notable_circumstances"] = []
 
-            # Add ranking change
-            form = bout[side]["performances"][0]["form"]
+        data["away"] = {}
+        data["home"] = {}
+        data["away"]["name"] = bout["away"]["name"]
+        data["away"]["description"] = bout["away"]["description"]
+        data["home"]["name"] = bout["home"]["name"]
+        data["home"]["description"] = bout["home"]["description"]
+        data["away"]["gender"] = "Male" if bout["away"]["isMale"] else "Female"
+        data["home"]["gender"] = "Male" if bout["home"]["isMale"] else "Female"
 
-            change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
+        if bout["away"]["description"].split(".")[0] == bout["home"]["description"].split(".")[0]:
+            data["notable_circumstances"].append(f"Pebblers are members of same group: '{bout["away"]["description"].split(".")[0].split('the ', 1)[1] }'")
+            rel = True
 
-            bout[side]["updated_ranking"] = {}
+        if (
+            data["away"]["name"] == "Julie B." and "Yellow Fellows" in bout["home"]["description"]
+            or data["home"]["name"] == "Julie B." and "Yellow Fellows" in bout["away"]["description"]
+        ):
+            data["notable_circumstances"].append(f"Honorary member meets member: 'Yellow Fellows'")
+            rel = True
 
-            if change < 0:
-                bout[side]["updated_ranking"]["ranking_change"] = "Down " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
-            elif change > 0:
-                bout[side]["updated_ranking"]["ranking_change"] = "Up " + str(abs(change)) + " spot" + ("s" if abs(change) > 1 else "")
+        if (
+            data["away"]["name"] == "Pip" and "emperors of the Pebble Kingdom" in bout["home"]["description"]
+            or data["home"]["name"] == "Pip" and "emperors of the Pebble Kingdom" in bout["away"]["description"]
+        ):
+            data["notable_circumstances"].append(f"Honorary member meets member: 'emperors of the Pebble Kingdom'")
+            rel = True
+
+        if data["away"]["name"] in data["home"]["description"].split(".")[0] or data["home"]["name"] in data["away"]["description"].split(".")[0]:
+            away_str = ""
+            home_str = ""
+
+            if data["away"]["name"] in data["home"]["description"]:
+                home_str = f"{data["home"]["name"]}: {data["home"]["description"].split(".")[0]}"
+
+            if data["home"]["name"] in data["away"]["description"]:
+                away_str = f"{data["away"]["name"]}: {data["away"]["description"].split(".")[0]}"
+
+            data["notable_circumstances"].append(f"Pebblers have a personal relationship. {away_str}{"; " if away_str and home_str else ""}{home_str}")
+            rel = True
+        
+        away_qp = 0
+        home_qp = 0
+        data["bout_events"] = {}
+        data["bout_events"]["initial_roll"] = {
+            "away": f"{data["away"]["name"]} rolls a {bout["away_roll"]} with '{bout["away"]["trait"]}' trait",
+            "home": f"{data["home"]["name"]} rolls a {bout["home_roll"]} with '{bout["home"]["trait"]}' trait",
+        }
+        data["bout_events"]["initial_rolls"] = f"{data["away"]["name"]}: {bout["away_roll"]} - {bout["home"]["name"]}: {bout["home_roll"]}"
+        data["bout_events"]["quirk_activations"] = {"away" : None, "home": None}
+        if bout["away_quirk"]:
+            data["bout_events"]["quirk_activations"]["away"] = f"{data["away"]["name"]} gains {"2 pebbles" if div in divisions[:2] else "1 pebble"} with '{bout["away"]["quirk"]}' quirk"
+            away_qp = 2 if div in divisions[:2] else 1
+        if bout["home_quirk"]:
+            data["bout_events"]["quirk_activations"]["home"] = f"{data["home"]["name"]} gains {"2 pebbles" if div in divisions[:2] else "1 pebble"} with '{bout["home"]["quirk"]}' quirk"
+            home_qp = 2 if div in divisions[:2] else 1
+        data["bout_events"]["away_ability_trigger"] = None
+        if bout["away_ability"]:
+            data["bout_events"]["away_ability_trigger"] = f"{data["away"]["name"]} {abilityActionMap[bout["away"]["ability"]]} with '{bout["away"]["ability"]}' ability"
+        data["bout_events"]["halftime_rolls"] = f"{data["away"]["name"]}: {bout["away_roll_half"]} - {bout["home"]["name"]}: {bout["home_roll_half"]}"
+        data["bout_events"]["home_ability_trigger"] = None
+        if bout["home_ability"]:
+            data["bout_events"]["home_ability_trigger"] = f"{data["home"]["name"]} {abilityActionMap[bout["home"]["ability"]]} with '{bout["home"]["ability"]}' ability"
+        data["bout_events"]["final_rolls"] = f"{data["away"]["name"]}: {bout["away_roll_final"]} - {bout["home"]["name"]}: {bout["home_roll_final"]}"
+
+        awayResult = None
+        homeResult = None
+        if bout["away_roll_final"] is not None and bout["home_roll_final"] is not None:
+            if bout["away_roll_final"] > bout["home_roll_final"]:
+                awayResult = "winning"
+                homeResult = "losing"
+            elif bout["away_roll_final"] < bout["home_roll_final"]:
+                homeResult = "winning"
+                awayResult = "losing"
             else:
-                bout[side]["updated_ranking"]["ranking_change"] = "Rank stays the same"
+                awayResult = "tying"
+                homeResult = "tying"
+            
+        data["bout_events"]["results"] = {
+            "away": f"{bout["away"]["name"]} gains {bout["away_score"] - away_qp} pebbles from {awayResult}",
+            "home": f"{bout["home"]["name"]} gains {bout["home_score"] - home_qp} pebbles from {homeResult}",
+        }
+        data["bout_events"]["total_pebbles"] = {
+            "away": f"{bout["away"]["name"]}: {bout["away_score"]}",
+            "home": f"{bout["home"]["name"]}: {bout["home_score"]}",
+        }
 
-            bout[side]["updated_ranking"]["updated_rank"] = bout[side]["performances"][0]["rank"]
-            bout[side]["updated_ranking"]["previous_rank"] = bout[side]["performances"][0]["previous_rank"]
+        if day >= RANKINGS_THRESHOLD:
+            data["updated_notable_streaks"] = {}
+            data["updated_ranking"] = {}
+        if day == FINAL_DAY:
+            data["updated_division"] = {}
+        elif day >= PROMOTE_DEMOTE_THRESHOLD:
+            data["promotion/demotion_status"] = {}
+        for side in ["away", "home"]:
+            
+
+            # Add ranking change and streaks
+            if day >= RANKINGS_THRESHOLD:
+                data["updated_ranking"][side] = {}
+                change = bout[side]["performances"][0]["previous_rank"] - bout[side]["performances"][0]["rank"]
+
+                if change < 0:
+                    data["updated_ranking"][side]["ranking_change"] = "Down " + str(abs(change)) + " place" + ("s" if abs(change) > 1 else "")
+                elif change > 0:
+                    data["updated_ranking"][side]["ranking_change"] = "Up " + str(abs(change)) + " place" + ("s" if abs(change) > 1 else "")
+                else:
+                    data["updated_ranking"][side]["ranking_change"] = "Rank stays the same"
+
+                data["updated_ranking"][side]["updated_rank"] = bout[side]["performances"][0]["rank"]
+                data["updated_ranking"][side]["previous_rank"] = bout[side]["performances"][0]["previous_rank"]
+
+
+                form = bout[side]["performances"][0]["form"]
+                unbeaten = 0
+                winless = 0
+                win = 0
+                loss = 0
+                unbeaten_broke = False
+                winless_broke = False
+                win_broke = False
+                loss_broke = False
+                for ch in form[-2::-1]:
+                    if unbeaten_broke and winless_broke and win_broke and loss_broke:
+                        break
+                    if ch == 'W':
+                        if not win_broke:
+                            win += 1
+                        if not unbeaten_broke:
+                            unbeaten += 1
+                        loss_broke = True
+                        winless_broke = True
+                    elif ch == 'L':
+                        if not loss_broke:
+                            loss += 1
+                        if not winless_broke:
+                            winless += 1
+                        win_broke = True
+                        unbeaten_broke = True
+                    else:
+                        if not unbeaten_broke:
+                            unbeaten += 1
+                        if not winless_broke:
+                            winless += 1
+                        loss_broke = True
+                        win_broke = True
+
+                if win >= 5:
+                    data["notable_circumstances"].append(f"{data[side]["name"]} is on a {win} bout winning streak")
+                if loss >= 5:
+                    data["notable_circumstances"].append(f"{data[side]["name"]} is on a {loss} bout losing streak")
+                if unbeaten >= 9:
+                    data["notable_circumstances"].append(f"{data[side]["name"]} is on a {unbeaten} bout unbeaten streak")
+                if winless >= 9:
+                    data["notable_circumstances"].append(f"{data[side]["name"]} is on a {winless} bout winless streak")
+
+                if len(form) > 0:
+                    data["updated_notable_streaks"][side] = {
+                        "unbeaten" : {
+                            "count": unbeaten + (0 if form[-1] == 'L' else 1),
+                            "type": "snapped" if form[-1] == 'L' else "extended",
+                        },
+                        "winless" : {
+                            "count": winless + (0 if form[-1] == 'W' else 1),
+                            "type": "snapped" if form[-1] == 'W' else "extended",
+                        },
+                        "win" : {
+                            "count": win + (1 if form[-1] == 'W' else 0),
+                            "type": "extended" if form[-1] == 'W' else "snapped",
+                        },
+                        "loss" : {
+                            "count": loss + (1 if form[-1] == 'L' else 0),
+                            "type": "extended" if form[-1] == 'L' else "snapped",
+                        },
+                    }
+
+                    if (
+                    data["updated_notable_streaks"][side]["unbeaten"]["count"] < 5 or 
+                    data["updated_notable_streaks"][side]["unbeaten"]["count"] == data["updated_notable_streaks"][side]["win"]["count"]
+                    ):
+                        del data["updated_notable_streaks"][side]["unbeaten"]
+
+                    if (
+                    data["updated_notable_streaks"][side]["winless"]["count"] < 5 or 
+                    data["updated_notable_streaks"][side]["winless"]["count"] == data["updated_notable_streaks"][side]["loss"]["count"]
+                    ):
+                        del data["updated_notable_streaks"][side]["winless"]
+
+                    if data["updated_notable_streaks"][side]["win"]["count"] < 3:
+                        del data["updated_notable_streaks"][side]["win"]
+
+                    if data["updated_notable_streaks"][side]["loss"]["count"] < 3:
+                        del data["updated_notable_streaks"][side]["loss"]
 
             # More explicit labeling for the final day
-            if final_day:
+            if day == FINAL_DAY:
                 result = f"Stayed in {div}"
 
                 if bout[side]["performances"][0]["rank"] <= 5 and div != divisions[0]:
@@ -160,82 +362,74 @@ def get_claude_data(bouts, final_day):
                     idx = divisions.index(div)
                     result = f"Demoted to {divisions[idx + 1]}"
 
-                bout[side]["updated_division"] = result
-
-
-            # Convert form -> win/loss/unbeaten/winless streaks
-            unbeaten = 0
-            winless = 0
-            win = 0
-            loss = 0
-            unbeaten_broke = False
-            winless_broke = False
-            win_broke = False
-            loss_broke = False
-
-            for ch in form[-2::-1]:
-                if unbeaten_broke and winless_broke and win_broke and loss_broke:
-                    break
-                if ch == 'W':
-                    if not win_broke:
-                        win += 1
-                    if not unbeaten_broke:
-                        unbeaten += 1
-                    loss_broke = True
-                    winless_broke = True
-                elif ch == 'L':
-                    if not loss_broke:
-                        loss += 1
-                    if not winless_broke:
-                        winless += 1
-                    win_broke = True
-                    unbeaten_broke = True
+                data["updated_division"][side] = result
+            elif day >= PROMOTE_DEMOTE_THRESHOLD:
+                idx = divisions.index(div)
+                if idx != 0 and data["updated_ranking"][side]["updated_rank"] <= 5:
+                    data["promotion/demotion_status"][side] = f"In position for promotion to {divisions[idx - 1]}"
+                elif idx != 0 and data["updated_ranking"][side]["updated_rank"] <= 9:
+                    data["promotion/demotion_status"][side] = f"Just outside position for promotion to {divisions[idx - 1]}"
+                elif idx != len(divisions) - 1 and data["updated_ranking"][side]["updated_rank"] >= 21:
+                    data["promotion/demotion_status"][side] = f"In position for demotion to {divisions[idx + 1]}"
+                elif idx != len(divisions) - 1 and data["updated_ranking"][side]["updated_rank"] >= 17:
+                    data["promotion/demotion_status"][side] = f"Just outside position for demotion to {divisions[idx + 1]}"
+                elif idx == 0 and data["updated_ranking"][side]["updated_rank"] <= 5:
+                    data["promotion/demotion_status"][side] = f"Cannot be promoted from {divisions[0]} division"
+                elif idx == len(divisions) - 1 and data["updated_ranking"][side]["updated_rank"] >= 21:
+                    data["promotion/demotion_status"][side] = f"Cannot be demoted from {divisions[-1]} division"
                 else:
-                    if not unbeaten_broke:
-                        unbeaten += 1
-                    if not winless_broke:
-                        winless += 1
-                    loss_broke = True
-                    win_broke = True
+                    data["promotion/demotion_status"][side] = "Not in position for promotion/demotion"
 
-            if len(form) > 0:
-                bout[side]["updated_notable_streaks"] = {
-                    "unbeaten" : {
-                        "count": unbeaten + (0 if form[-1] == 'L' else 1),
-                        "type": "snapped" if form[-1] == 'L' else "extended",
-                    },
-                    "winless" : {
-                        "count": winless + (0 if form[-1] == 'W' else 1),
-                        "type": "snapped" if form[-1] == 'W' else "extended",
-                    },
-                    "win" : {
-                        "count": win + (1 if form[-1] == 'W' else 0),
-                        "type": "extended" if form[-1] == 'W' else "snapped",
-                    },
-                    "loss" : {
-                        "count": loss + (1 if form[-1] == 'L' else 0),
-                        "type": "extended" if form[-1] == 'L' else "snapped",
-                    },
-                }
 
-                if (
-                    bout[side]["updated_notable_streaks"]["unbeaten"]["count"] < 5 or 
-                    bout[side]["updated_notable_streaks"]["unbeaten"]["count"] == bout[side]["updated_notable_streaks"]["win"]["count"]
-                ):
-                    del bout[side]["updated_notable_streaks"]["unbeaten"]
+        if day >= RANKINGS_THRESHOLD:
+            if data["updated_ranking"]["away"]["previous_rank"] <= 5 and data["updated_ranking"]["home"]["previous_rank"] <= 5:
+                data["notable_circumstances"].append("Bout between two top 5 pebblers")
+                ranking_bookend = True
 
-                if (
-                    bout[side]["updated_notable_streaks"]["winless"]["count"] < 5 or 
-                    bout[side]["updated_notable_streaks"]["winless"]["count"] == bout[side]["updated_notable_streaks"]["loss"]["count"]
-                ):
-                    del bout[side]["updated_notable_streaks"]["winless"]
+            if data["updated_ranking"]["away"]["previous_rank"] >= 21 and data["updated_ranking"]["home"]["previous_rank"] >= 21:
+                data["notable_circumstances"].append("Bout between two bottom 5 pebblers")
+                ranking_bookend = True
 
-                if bout[side]["updated_notable_streaks"]["win"]["count"] < 3:
-                    del bout[side]["updated_notable_streaks"]["win"]
+        div_mp[div] += 1
 
-                if bout[side]["updated_notable_streaks"]["loss"]["count"] < 3:
-                    del bout[side]["updated_notable_streaks"]["loss"]
+        if (
+            data["bout_events"]["away_ability_trigger"] and data["bout_events"]["home_ability_trigger"]
+            or rel
+            or ranking_bookend and (data["bout_events"]["away_ability_trigger"] or  data["bout_events"]["home_ability_trigger"] or (len([value for value in data["bout_events"]["quirk_activations"].values() if value is not None]) == 2 and div == divisions[-1]))
+        ):
+            if auto_bout[div]:
+                auto.append(data)
+            else:
+                if notable_bout[div]:
+                    notable.append(notable_bout[div])
+                    notable_bout[div] = None
+                auto_bout[div] = data
 
-            del bout[side]["performances"]
+        elif (
+            len(data["notable_circumstances"]) > 0 or 
+            len([value for value in data["bout_events"]["quirk_activations"].values() if value is not None]) == 2 and div == divisions[-1] or 
+            data["bout_events"]["away_ability_trigger"] or data["bout_events"]["home_ability_trigger"]
+        ):
+            if auto_bout[div] or notable_bout[div]:
+                notable.append(data)
+            else:
+                notable_bout[div] = data
 
-    return serializer
+        elif not auto_bout[div] and not notable_bout[div] and div_mp[div] == BOUTS_PER_DIV:
+            notable_bout[div] = data
+
+    bouts_to_report = []
+    for divvy in divisions:
+        if auto_bout[divvy]:
+            bouts_to_report.append(auto_bout[divvy])
+        else:
+            bouts_to_report.append(notable_bout[divvy])
+
+    auto.extend(notable)
+    for elem in auto:
+        if len(bouts_to_report) < MAX_BOUTS:
+            bouts_to_report.append(elem)
+
+    bouts_to_report.sort(key=lambda bout : bout["time"])
+
+    return bouts_to_report

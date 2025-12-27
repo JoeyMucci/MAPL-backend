@@ -8,7 +8,6 @@ from django.db.models import Avg, Min, Max, Count, F, Q
 import re
 import calendar
 
-
 BOUTS_PER_SEASON = 24
 DAYS_PER_MONTH = 25
 divisions = ["Master", "All-Star", "Professional", "Learner"]
@@ -507,7 +506,7 @@ def get_hot_pebblers(request):
 # Return the five most recent bouts with an ability trigger
 @api_view(['GET'])
 def get_hot_bouts(request):
-    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True) | (Q(away_quirk=True) & Q(home_quirk=True))).order_by('time').reverse()[:5]
+    hot_bouts = Bout.objects.filter(Q(away_ability=True) | Q(home_ability=True) | (Q(division="Learner") & Q(away_quirk=True) & Q(home_quirk=True))).order_by('time').reverse()[:5]
 
     try:
         serializer = BoutSmall(hot_bouts, many=True)

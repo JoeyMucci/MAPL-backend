@@ -9,15 +9,16 @@ num_days = 25
 divisions = ["Master", "All-Star", "Professional", "Learner"]
 last_division = "Learner"
 
-start_year = 2023
+# First month/year BEFORE the first cycle
+start_year = 2025
 start_month = 12
 
 # REAL_TIME determines whether or not to use to actual time, set to false and modify
 # CUR_YEAR, CUR_MONTH, and CUR_DAY to test the league running for certain amount of time
 real_time = True
-cur_year = 2025
-cur_month = 11
-cur_day = 25
+# cur_year = 2025
+# cur_month = 12
+# cur_day = 1
 
 pebbler_list = [
     {'name': 'Ally', 'description': 'An imposing yet loving alligator. Lives lavishly and spoils those she cares for.', 'isMale': False, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Tip the Scales'},
@@ -73,7 +74,7 @@ pebbler_list = [
     {'name': 'Jonathan', 'description': 'An elf with a strong sense of duty. Naturally gifted at the game of hide and seek.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Untouchable', 'ability': 'Miracle'},
     {'name': 'Juan', 'description': 'An easy-going avocado slice. Enjoys sitting back and watching pebble competition when he is not involved.', 'isMale': True, 'trait': 'Power', 'quirk': 'Oddball', 'ability': 'Generosity'},
     {'name': 'Julie B.', 'description': 'Honorary member of the Yellow Fellows. Enjoys the company of those that can make her smile.', 'isMale': False, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Lucky Seven'},
-    {'name': 'Leo', 'description': 'A young tiger with remarkable resolve. Does not take himself too seriously and quick to smile.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Generosity'},
+    {'name': 'Leo', 'description': 'Member of the Tiger Trio. Has remarkable resolve but does not take himself too seriously and is quick to smile.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Generosity'},
     {'name': 'Liam', 'description': 'A sloth who speaks in a low tone. Is never in any particular rush to go anywhere.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Even Temper', 'ability': 'Tip the Scales'},
     {'name': 'Logan', 'description': 'Brother to Ethan. Is gifted at persuasion by making structured arguments that follow from one another.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Oddball', 'ability': 'Will to Win'},
     {'name': 'Luke', 'description': 'A determined bear who takes his craft seriously. Cooperates well and is an asset in a team setting.', 'isMale': True, 'trait': 'Power', 'quirk': 'Pity Pebble', 'ability': 'Will to Win'},
@@ -82,19 +83,19 @@ pebbler_list = [
     {'name': 'Matthew', 'description': 'A modest polar bear unlikely to cause any harm. Calculates potential outcomes before proceeding.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Pity Pebble', 'ability': 'Miracle'},
     {'name': 'Mertz', 'description': 'A diligent handyman who you can count on regardless of the circumstance. Renowned for his innate jumping ability.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Oddball', 'ability': 'Lucky Seven'},
     {'name': 'Monet', 'description': 'A serene squid who is not easily bothered. Finds joy in painting and has become more skilled after years of work.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Tip the Scales'},
-    {'name': 'Moshi', 'description': 'Adopted son of Bloshi. Possesses innate talent yet without the years to wield it to its potential.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Pity Pebble', 'ability': 'Lucky Seven'},
+    {'name': 'Moshi', 'description': 'Adopted son of Bloshi. Harbors innate talent yet without the years to wield it to its potential.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Pity Pebble', 'ability': 'Lucky Seven'},
     {'name': 'Ness', 'description': 'A mysterious sea creature who prefers to wear plaid. Two-time winner on the Super Pebble Circuit.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Pity Pebble', 'ability': 'Tip the Scales'},
     {'name': 'Nickelby', 'description': 'Stalwart defender of the Pebble Kingdom. Can deflect threats with his massive and bouncy belly.', 'isMale': True, 'trait': 'Power', 'quirk': 'Untouchable', 'ability': 'Miracle'},
     {'name': 'Nut', 'description': 'Member of the Choco Chumps. Stays strong by drinking milk routinely.', 'isMale': True, 'trait': 'Power', 'quirk': 'Even Temper', 'ability': 'Generosity'},
     {'name': 'Osh', 'description': 'A cute sea otter who dreams of being a samurai. Grows along with those he meets.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Pity Pebble', 'ability': 'Will to Win'},
-    {'name': 'Owen', 'description': 'A pig who finds pleasure in the simple things. Above all, likes to take in the sun on warm days.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Pity Pebble', 'ability': 'Lucky Seven'},
+    {'name': 'Owen', 'description': 'A pig who finds pleasure in the simple things. Especially likes to take in the sun on warm days.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Pity Pebble', 'ability': 'Lucky Seven'},
     {'name': 'Pabu', 'description': 'A ferocious ferret who is tough to track down. Is experienced around fire and rock.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Even Temper', 'ability': 'Miracle'},
     {'name': 'Papa', 'description': 'Guardian to Baby. Somehow manages to cause more damage than his charge despite having seniority.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Will to Win'},
     {'name': 'Pete', 'description': 'A spotted house plant with a strong bite. Sings catchy tunes and often dances while doing so.', 'isMale': True, 'trait': 'Power', 'quirk': 'Oddball', 'ability': 'Miracle'},
     {'name': 'Pigion', 'description': 'Member of the Yellow Fellows. While technically the leader of the band, he prefers operating as a peer.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Untouchable', 'ability': 'Generosity'},
     {'name': 'Pinky', 'description': 'A flamboyantly colored dolphin in excellent shape. Once volunteered as a guest star in a production.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Even Temper', 'ability': 'Generosity'},
     {'name': 'Pip', 'description': 'Honorary emperor of the Pebble Kingdom. Grows along with those he meets.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Even Temper', 'ability': 'Lucky Seven'},
-    {'name': 'Raito', 'description': 'An elderly and battle-tested tiger. While physically not the same as he once was, his aura and wisdom demands respect.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
+    {'name': 'Raito', 'description': 'Member of the Tiger Trio. An elderly and battle-tested elder whose aura demands respect.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
     {'name': 'Road', 'description': 'Member of the Toad Brigade. A natural leader who quickly gains the trust of his peers.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Pity Pebble', 'ability': 'Tip the Scales'},
     {'name': 'Ruby', 'description': 'Member of the Dynamic Dinos. Well-acclimated to windy environments with lots of leaves.', 'isMale': False, 'trait': 'Power', 'quirk': 'Even Temper', 'ability': 'Will to Win'},
     {'name': 'Ruth', 'description': 'Member of the Choco Chumps. Known for her dependability, she is well-trusted by many.', 'isMale': False, 'trait': 'Power', 'quirk': 'Pity Pebble', 'ability': 'Generosity'},
@@ -109,7 +110,7 @@ pebbler_list = [
     {'name': 'Stewart', 'description': 'Member of the Yellow Fellows. Enjoys having playful banter with his friends.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Oddball', 'ability': 'Tip the Scales'},
     {'name': 'Straw', 'description': 'An accommodating donut who is easy to get along with. Has a secret talent of designing and decorating.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
     {'name': 'Stretch', 'description': 'A young monkey with exceptional flexibility in his arms and legs. Enjoys playing around and hanging from trees.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Oddball', 'ability': 'Tip the Scales'},
-    {'name': 'Stripe', 'description': 'A tiger with intense focus. Holds himself to a high standard and can master repeatable tasks.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Will to Win'},
+    {'name': 'Stripe', 'description': 'Member of the Tiger Trio. Holds himself to a high standard and has the focus to master repeatable tasks.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Will to Win'},
     {'name': 'Taro', 'description': 'A creature from beyond this world. Using some sort of sorcery he has made himself appear in a more youthful form.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Untouchable', 'ability': 'Will to Win'},
     {'name': 'Timmy', 'description': 'A veteran dog who is respected and admired by those around him. Honors the fallen pebbler Tommy, his brother.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
     {'name': 'Toast', 'description': 'A slice of breakfast bread who likes to wear a red beret to match his boots. Takes good care of himself and always smells nice.', 'isMale': True, 'trait': 'Grace', 'quirk': 'Proud Pebble', 'ability': 'Lucky Seven'},
