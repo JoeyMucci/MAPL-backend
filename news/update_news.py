@@ -16,10 +16,10 @@ PROMOTE_DEMOTE_THRESHOLD = 13
 FINAL_DAY = 25
 BOUTS_IN_DAY = 48
 
-real_time = False
-y = 2026
-m = 2
-d = 25
+real_time = True
+y = 2025
+m = 12
+d = 1
 
 if real_time:
     cur_time = timezone.now()
