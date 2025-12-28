@@ -31,9 +31,9 @@ def get_author(request, authorName):
 
     try:
         author = Reporter.objects.get(name=author_name)
-    except Pebbler.DoesNotExist:
+    except Reporter.DoesNotExist:
         return Response(
-            {'error': 'Pebbler not found'}, 
+            {'error': 'Reporter not found'}, 
             status=status.HTTP_404_NOT_FOUND
         )
 
@@ -47,6 +47,29 @@ def get_author(request, authorName):
         )
     
     return Response(serialized_author, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_helper(request, helperName):
+    helper_name = camelcase_to_words(helperName)
+
+    try:
+        helper = Referee.objects.get(name=helper_name)
+    except Referee.DoesNotExist:
+        return Response(
+            {'error': 'Referee not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        serializer = RefereeSerializer(helper)
+        serialized_helper = serializer.data
+    except Exception as e:
+        return Response(
+            {'error': f'Serializing error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    return Response(serialized_helper, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_news_by_month(request, month, year):

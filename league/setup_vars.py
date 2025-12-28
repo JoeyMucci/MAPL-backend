@@ -95,7 +95,7 @@ pebbler_list = [
     {'name': 'Pigion', 'description': 'Member of the Yellow Fellows. While technically the leader of the band, he prefers operating as a peer.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Untouchable', 'ability': 'Generosity'},
     {'name': 'Pinky', 'description': 'A flamboyantly colored dolphin in excellent shape. Once volunteered as a guest star in a production.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Even Temper', 'ability': 'Generosity'},
     {'name': 'Pip', 'description': 'Honorary emperor of the Pebble Kingdom. Grows along with those he meets.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Even Temper', 'ability': 'Lucky Seven'},
-    {'name': 'Raito', 'description': 'Member of the Tiger Trio. An elderly and battle-tested elder whose aura demands respect.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
+    {'name': 'Raito', 'description': 'Member of the Tiger Trio. A battle-tested elder whose aura demands respect.', 'isMale': True, 'trait': 'Skill', 'quirk': 'Proud Pebble', 'ability': 'Miracle'},
     {'name': 'Road', 'description': 'Member of the Toad Brigade. A natural leader who quickly gains the trust of his peers.', 'isMale': True, 'trait': 'Speed', 'quirk': 'Pity Pebble', 'ability': 'Tip the Scales'},
     {'name': 'Ruby', 'description': 'Member of the Dynamic Dinos. Well-acclimated to windy environments with lots of leaves.', 'isMale': False, 'trait': 'Power', 'quirk': 'Even Temper', 'ability': 'Will to Win'},
     {'name': 'Ruth', 'description': 'Member of the Choco Chumps. Known for her dependability, she is well-trusted by many.', 'isMale': False, 'trait': 'Power', 'quirk': 'Pity Pebble', 'ability': 'Generosity'},

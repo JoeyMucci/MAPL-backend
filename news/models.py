@@ -1,5 +1,12 @@
 from django.db import models
 
+class Referee(models.Model):
+    name = models.CharField(max_length=20)
+    description = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.name
+
 class Reporter(models.Model):
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=256)

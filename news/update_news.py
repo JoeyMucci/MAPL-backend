@@ -56,6 +56,29 @@ if len(reporters) == 0:
     
     Reporter.objects.bulk_create([lippo, ari, patrick])
 
+referees = Referee.objects.all()
+
+if len(referees) == 0:
+    shaun = Referee(
+        name = "Shaun",
+        description = '''A shy guy and an inconspicuous referee. Overcomes his timid nature to educate on the rules of the MAPL and go on 
+        various adventures. Some of his past exploits include kart racing, game show hosting, and amateur athletics.'''
+    )
+
+    neville = Referee(
+        name = "Neville",
+        description = '''An airborne turtle and a strict referee. Enforces the rules of the MAPL expertly, understanding every nuance
+        of how bouts are carried out. Throws spiky red objects whenever he needs to interject and make a ruling.'''
+    )
+
+    tickle = Referee(
+        name = "Tickle",
+        description = '''A walking time bomb and a concise referee. Excels at keeping things moving when on the job, communicating
+        quickly and effectively. Is suprisingly laid back after his work is done.'''
+    )
+
+    Referee.objects.bulk_create([shaun, neville, tickle])
+
 reports = Report.objects.all().filter(year=y, month=m, day=d)
 bouts = Bout.objects.filter(month=m, day=d, year=y, away_roll__isnull=False)
 

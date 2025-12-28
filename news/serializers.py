@@ -2,6 +2,11 @@ from rest_framework import serializers
 from league.models import *
 from news.models import *
 
+class RefereeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referee
+        fields = ["description", "name"]
+
 class ReporterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reporter
