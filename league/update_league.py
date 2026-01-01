@@ -23,7 +23,6 @@ def startup_league(year: int, month: int) -> None:
             quirk=pebbler_info[i]["quirk"],
             ability=pebbler_info[i]["ability"],
         )
-    r.shuffle(pebbler_info)
     Pebbler.objects.bulk_create(pebbler_info)
     prepare_next_month(year, month)
 
@@ -272,15 +271,15 @@ def prepare_next_month(year: int, month: int) -> None:
 
     new_divisions = {}
     # If there was not a previous season assign randomly
-    # Pebblers are shuffled after insertion, so objects.all() is random
     if Performance.objects.count() == 0:
-        all_pebblers = Pebbler.objects.all()
+        all_pebblers = list(Pebbler.objects.all())
+        r.shuffle(all_pebblers)
         start = 0
-        for division in ["Master", "All-Star", "Professional", "Learner"]:
-            new_divisions[division] = [all_pebblers[i] for i in range(start, start + sv.pebblers_per_div)]
+        for division in sv.divisions:
+            new_divisions[division] = all_pebblers[start:start + sv.pebblers_per_div]
             start += sv.pebblers_per_div
     else:
-        for division in ["Master", "All-Star", "Professional", "Learner"]:
+        for division in sv.divisions:
             new_divisions[division] = [
                 performance.pebbler
                 for performance in Performance.objects.filter(
@@ -298,7 +297,7 @@ def prepare_next_month(year: int, month: int) -> None:
 
     # Update the tables for each division  
     start_minutes = 0
-    for division in ["Master", "All-Star", "Professional", "Learner"]:
+    for division in sv.divisions:
         tiebreakers = [i for i in range(1, 26)]
 
         for pebbler in new_divisions[division]:
