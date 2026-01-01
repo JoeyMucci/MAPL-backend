@@ -272,7 +272,7 @@ def prepare_next_month(year: int, month: int) -> None:
     new_divisions = {}
     # If there was not a previous season assign randomly
     if Performance.objects.count() == 0:
-        all_pebblers = Pebbler.objects.all()
+        all_pebblers = Pebbler.objects.all().order_by('?')
         start = 0
         for division in ["Master", "All-Star", "Professional", "Learner"]:
             new_divisions[division] = [all_pebblers[i] for i in range(start, start + sv.pebblers_per_div)]
