@@ -36,12 +36,6 @@ sys_prompts = {
 reporters = Reporter.objects.all()
 
 if len(reporters) == 0:
-    lippo = Reporter(
-        name = "Lippo",
-        description = '''An incredulous parrot and boisterous reporter. Often repeats details that are particularly amazing 
-        in his reporting. Some have speculated that he is related to a certain pebbler, although no one can say for sure.'''
-    )
-
     ari = Reporter(
         name = "Ari",
         description = '''An octopus mother and industrious reporter. Is motivated to always get the scoop on the latest happenings 
@@ -53,8 +47,14 @@ if len(reporters) == 0:
         description = '''A scholarly bear and detailed reporter. Likes to use his extensive vocabulary and deep knowledge of 
         the pebblers while reporting. In his free time, enjoys following or curating competitions of all varieties.'''
     )
+
+    lippo = Reporter(
+        name = "Lippo",
+        description = '''An incredulous parrot and boisterous reporter. Often repeats details that are particularly amazing 
+        in his reporting. Some have speculated that he is related to a certain pebbler, although no one can say for sure.'''
+    )
     
-    Reporter.objects.bulk_create([lippo, ari, patrick])
+    Reporter.objects.bulk_create([ari, patrick, lippo])
 
 referees = Referee.objects.all()
 
