@@ -224,7 +224,6 @@ Before submitting, filter out your response for any content that is not part of 
                 essay = block.text
                 essay = re.sub(r"\*\*(.+?)\*\*", r"\1", essay)
                 essay = re.sub(r"\*(.+?)\*", r"\1", essay)
-                essay = re.sub("\r", "", essay)
                 essay = essay.strip()
 
                 response = anthropic.Anthropic().messages.create(
