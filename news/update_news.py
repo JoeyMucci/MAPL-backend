@@ -222,6 +222,8 @@ Before submitting, filter out your response for any content that is not part of 
         for block in response.content:
             if block.type == "text":
                 essay = block.text
+                essay = re.sub(r"^\*\*(.+?)\*\*", r"", essay)
+                essay = re.sub(r"^\*(.+?)\*", r"", essay)
                 essay = re.sub(r"\*\*(.+?)\*\*", r"\1", essay)
                 essay = re.sub(r"\*(.+?)\*", r"\1", essay)
                 essay = essay.strip()
