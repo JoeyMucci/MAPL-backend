@@ -228,7 +228,7 @@ Before submitting, filter out your response for any content that is not part of 
                 essay = re.sub(r"\*(.+?)\*", r"\1", essay)
                 essay = essay.strip()
 
-                response = anthropic.Anthropic().messages.create(
+                response = client.messages.create(
                     model="claude-sonnet-4-20250514",
                     max_tokens=20000,
                     system=sys_prompts[author].split('.')[0],
