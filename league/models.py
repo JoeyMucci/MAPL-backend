@@ -109,3 +109,9 @@ class Performance(models.Model):
 
     def __str__(self):
         return f"{self.division}: {self.pebbler} ({self.year}-{self.month:02d})"
+
+class CoolBoutID(models.Model):
+    id = models.IntegerField
+
+    def __str__(self):
+        return f"{self.id}"

@@ -28,4 +28,7 @@ urlpatterns = [
     path('api/news/author/<str:authorName>/', news_views.get_author, name='author'),
     path('api/news/helper/<str:helperName>/', news_views.get_helper, name='helper'),
     path('api/hot/news/', news_views.get_hot_press, name='hot-press'),
+
+    path('api/coolbout', views.get_cool_bout),
+    path('api/coolbout/add', views.post_cool_bout),
 ]

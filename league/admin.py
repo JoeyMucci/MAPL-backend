@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Pebbler, Bout, Performance
+from .models import *
 
 admin.site.register(Pebbler)
 
@@ -30,3 +30,5 @@ class BoutAdmin(admin.ModelAdmin):
     ability_activated_h.short_description = 'Home ability'
 
 admin.site.register(Bout, BoutAdmin)
+
+admin.site.register(CoolBoutID)

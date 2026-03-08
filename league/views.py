@@ -2,6 +2,7 @@ from .models import *
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import *
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from django.db.models import Avg, Min, Max, Count, F, Q
@@ -534,3 +535,43 @@ def get_hot_rivalries(request):
         })
 
     return Response(rivalry_info, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_cool_bout(request):
+    cbids = CoolBoutID.objects.all()
+    try:
+        assert len(cbids) == 1
+    except:
+        return Response(
+            {'error': "Wrong amount of cool_bouts"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    cbid = cbids[0]
+    bout = get_object_or_404(Bout, pk=cbid.id)
+    try:
+        serializer = BoutSmall(bout)
+    except Exception as e:
+        return Response(
+            {'error': f'Serializing error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@login_required
+@api_view(['POST'])
+def post_cool_bout(request):
+    CoolBoutID.objects.all().delete()
+
+    try:
+        id = int(request.data["id"])
+    except:
+        return Response(
+            {'error': f'Must supply id argument as an int'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    CoolBoutID.objects.create(id=id)
+
+    return Response({}, status=status.HTTP_201_CREATED)
