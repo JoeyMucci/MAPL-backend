@@ -202,7 +202,6 @@ Respond directly without preamble.
     response = client.messages.create(
         model="claude-sonnet-4-6",
         thinking={"type": "adaptive"},
-        output_config={"effort": "medium"},
         max_tokens=20000,
         system=sys_prompts[author],
         messages=[
@@ -228,7 +227,6 @@ Respond directly without preamble.
 
                 response = client.messages.create(
                     model="claude-sonnet-4-6",
-                    output_config={"effort": "low"},
                     max_tokens=20000,
                     system=sys_prompts[author].split('.')[0],
                     messages=[
