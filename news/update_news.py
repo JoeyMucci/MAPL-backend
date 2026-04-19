@@ -196,17 +196,15 @@ Your response should be in this format:
 
 Be sure to mention every bout.
 
-Before submitting, filter out your response for any content that is not part of the report. 
+Respond directly without preamble.
 '''
     
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
+        thinking={"type": "adaptive"},
+        output_config={"effort": "medium"},
         max_tokens=20000,
         system=sys_prompts[author],
-        thinking={
-            "type": "enabled",
-            "budget_tokens": 16000
-        },
         messages=[
             {
                 "role": "user", 
@@ -229,7 +227,8 @@ Before submitting, filter out your response for any content that is not part of 
                 essay = essay.strip()
 
                 response = client.messages.create(
-                    model="claude-sonnet-4-20250514",
+                    model="claude-sonnet-4-6",
+                    output_config={"effort": "low"},
                     max_tokens=20000,
                     system=sys_prompts[author].split('.')[0],
                     messages=[
@@ -239,7 +238,7 @@ Create a creative 10-20 word title for the following article:
 
 {essay}
 
-Before submitting, filter out your response for any content that is not part of the title. 
+Respond directly without preamble.
 """
                          }
                     ],
