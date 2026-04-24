@@ -221,8 +221,6 @@ Respond directly without preamble.
                 essay = block.text
                 essay = re.sub(r"^\*\*(.+?)\*\*", r"", essay)
                 essay = re.sub(r"^\*(.+?)\*", r"", essay)
-                essay = re.sub(r"\*\*(.+?)\*\*", r"\1", essay)
-                essay = re.sub(r"\*(.+?)\*", r"\1", essay)
                 essay = essay.strip()
 
                 response = client.messages.create(
